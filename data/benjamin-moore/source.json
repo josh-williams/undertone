@@ -1,0 +1,15 @@
+{
+  "source": "https://api.benjaminmoore.io/colors/colors",
+  "referencePage": "https://www.benjaminmoore.com/en-us/paint-colors",
+  "locale": "en-us",
+  "apiVersion": "v1.0",
+  "responseType": "simple",
+  "retrievedAt": "2026-11-05T03:53:31.915Z",
+  "recordCount": 4068,
+  "sha256": "3a8233363d2d287b59c2876a36bbd79c9db929ad1af580d9a2326cc18974d2d8",
+  "notes": [
+    "Manufacturer data preserved without color-space conversion.",
+    "Snapshot obtained from the API used by the manufacturer website; no runtime API dependency.",
+    "Completeness is relative to this API response, not every historic or regional paint color."
+  ]
+}

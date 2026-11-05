@@ -1,0 +1,1139 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Check,
+  ChevronRight,
+  CircleHelp,
+  Copy,
+  Download,
+  Grid2X2,
+  Heart,
+  Layers,
+  Map,
+  Moon,
+  Palette,
+  Plus,
+  Search,
+  Share2,
+  SlidersHorizontal,
+  Sun,
+  X,
+  Box,
+  Undo2,
+} from "lucide-react";
+import {
+  paints,
+  byId,
+  nearest,
+  inputColor,
+  directional,
+  directionLabels,
+  explain,
+  between,
+  families,
+  inFamily,
+  ink,
+  type Paint,
+  type Direction,
+} from "./color";
+import {
+  decodeLocation,
+  encodeLocation,
+  defaults,
+  readPreference,
+  savePreference,
+  type ViewState,
+} from "./state";
+import { ColorAtlas } from "./ColorAtlas";
+import source from "../data/benjamin-moore/source.json";
+
+function storedPins(): string[] {
+  try {
+    const p = JSON.parse(readPreference("undertone-pins") ?? "[]");
+    return Array.isArray(p)
+      ? p
+          .filter((x): x is string => typeof x === "string" && byId.has(x))
+          .slice(0, 12)
+      : [];
+  } catch {
+    return [];
+  }
+}
+function initialState() {
+  const state = decodeLocation(location.hash);
+  const params = new URLSearchParams(location.hash.slice(1));
+  const savedSurround = readPreference("undertone-surround");
+  return {
+    ...state,
+    surround: params.has("surround")
+      ? state.surround
+      : ["white", "gray", "black"].includes(savedSurround ?? "")
+        ? (savedSurround as ViewState["surround"])
+        : "gray",
+    start: byId.has(state.start) ? state.start : defaults.start,
+    paint: byId.has(state.paint) ? state.paint : defaults.paint,
+    end: byId.has(state.end) ? state.end : defaults.end,
+    pins: (new URLSearchParams(location.hash.slice(1)).has("pins")
+      ? state.pins
+      : storedPins()
+    )
+      .filter((id) => byId.has(id))
+      .slice(0, 12),
+  };
+}
+const icons = {
+  lighter: ArrowUp,
+  darker: ArrowDown,
+  muted: Moon,
+  colorful: Sun,
+  clockwise: ArrowRight,
+  counterclockwise: ArrowLeft,
+};
+const featured = ["HC-114", "HC-172", "OC-17", "HC-154", "AF-15", "HC-173"];
+export function App() {
+  const [state, setState] = useState<ViewState>(initialState);
+  const [theme, setTheme] = useState(
+    () => readPreference("undertone-theme") ?? "system",
+  );
+  const [systemDark, setSystemDark] = useState(
+    () => matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+  const surround = state.surround;
+  const setSurround = (surround: string) =>
+    update({ surround: surround as ViewState["surround"] });
+  const [endSearch, setEndSearch] = useState("");
+  const [notice, setNotice] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const [step, setStep] = useState<{
+    from: Paint;
+    direction: Direction;
+  } | null>(null);
+  const [about, setAbout] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(80);
+  const [queryDraft, setQueryDraft] = useState(state.query);
+  const selected = byId.get(state.paint) ?? byId.get(defaults.paint)!;
+  const start = byId.get(state.start) ?? byId.get(defaults.start)!;
+  const end = byId.get(state.end) ?? byId.get(defaults.end)!;
+  const dark = theme === "dark" || (theme === "system" && systemDark);
+  // Apply synchronously so canvas and browser UI use the same theme on this render.
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  const pins = state.pins
+    .map((id) => byId.get(id))
+    .filter((p): p is Paint => !!p);
+  function update(patch: Partial<ViewState>, replace = false) {
+    setState((s) => {
+      const next = { ...s, ...patch };
+      window.history[replace ? "replaceState" : "pushState"](
+        null,
+        "",
+        encodeLocation(next),
+      );
+      return next;
+    });
+  }
+  useEffect(() => {
+    window.history.replaceState(null, "", encodeLocation(state));
+    const pop = () => {
+      const next = decodeLocation(location.hash);
+      setState(next);
+      setQueryDraft(next.query);
+      setStep(null);
+    };
+    window.addEventListener("popstate", pop);
+    window.addEventListener("hashchange", pop);
+    return () => {
+      window.removeEventListener("popstate", pop);
+      window.removeEventListener("hashchange", pop);
+    };
+  }, []);
+  useEffect(() => {
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const changed = () => setSystemDark(media.matches);
+    media.addEventListener("change", changed);
+    return () => media.removeEventListener("change", changed);
+  }, []);
+  useEffect(() => {
+    savePreference("undertone-pins", JSON.stringify(state.pins));
+  }, [state.pins]);
+  useEffect(() => {
+    savePreference("undertone-theme", theme);
+  }, [theme]);
+  useEffect(() => {
+    savePreference("undertone-surround", surround);
+  }, [surround]);
+  useEffect(() => {
+    if (notice) {
+      const t = setTimeout(() => setNotice(""), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [notice]);
+  useEffect(() => {
+    setVisibleCount(80);
+  }, [
+    state.query,
+    state.family,
+    state.lightness,
+    state.mode,
+    state.end,
+    state.tolerance,
+  ]);
+  function select(p: Paint) {
+    if (p.id === selected.id) return;
+    setHistory((h) => [...h.slice(-19), selected.id]);
+    setStep(null);
+    update({ paint: p.id });
+  }
+  function pin(p: Paint) {
+    if (state.pins.includes(p.id))
+      update({ pins: state.pins.filter((id) => id !== p.id) });
+    else if (pins.length < 12) update({ pins: [...state.pins, p.id] });
+    else setNotice("Your comparison tray holds up to 12 colors.");
+  }
+  async function copy(text: string, label = "Copied to clipboard") {
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice(label);
+    } catch {
+      setNotice("Clipboard unavailable. Copy the URL from your address bar.");
+    }
+  }
+  const target = useMemo(() => inputColor(state.query), [state.query]);
+  const invalidColor =
+    !!state.query &&
+    !target &&
+    /^(#|(?:oklch|oklab|rgb|hsl|color|lab|lch)\()/i.test(state.query.trim());
+  const filtered = useMemo(
+    () =>
+      paints.filter(
+        (p) =>
+          inFamily(p, state.family) &&
+          (state.lightness === "all" ||
+            (state.lightness === "light"
+              ? p.l >= 0.8
+              : state.lightness === "dark"
+                ? p.l < 0.5
+                : p.l >= 0.5 && p.l < 0.8)) &&
+          (target ||
+            !state.query ||
+            `${p.name} ${p.id} ${p.previousName ?? ""}`
+              .toLowerCase()
+              .includes(state.query.toLowerCase())),
+      ),
+    [state.family, state.lightness, state.query, target],
+  );
+  const results = useMemo(
+    () =>
+      target
+        ? nearest(target, filtered, 24)
+        : [...filtered].sort((a, b) => a.h - b.h || b.l - a.l),
+    [filtered, target],
+  );
+  const path = useMemo(
+    () => between(start, end, state.tolerance),
+    [start, end, state.tolerance],
+  );
+  const neighbors = useMemo(
+    () =>
+      nearest(
+        selected,
+        paints.filter((p) => p.id !== selected.id),
+        8,
+      ),
+    [selected],
+  );
+  const steps = useMemo(
+    () =>
+      Object.fromEntries(
+        (Object.keys(directionLabels) as Direction[]).map((d) => [
+          d,
+          directional(selected, d),
+        ]),
+      ) as Record<Direction, Paint[]>,
+    [selected],
+  );
+  function takeStep(direction: Direction) {
+    const p = steps[direction][0];
+    if (!p) return;
+    setHistory((h) => [...h.slice(-19), selected.id]);
+    setStep({ from: selected, direction });
+    update({ paint: p.id });
+  }
+  function undo() {
+    const id = history.at(-1);
+    if (id) {
+      setHistory((h) => h.slice(0, -1));
+      setStep(null);
+      update({ paint: id });
+    }
+  }
+  function exportPalette() {
+    const data = {
+      title: "My Undertone palette",
+      brand: "Benjamin Moore",
+      colors: pins.map((p) => ({
+        name: p.name,
+        code: p.id,
+        hex: p.hex,
+        oklch: { l: p.l, c: p.c, h: p.h },
+        lrv: p.lrv,
+      })),
+      url: location.href,
+    };
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "undertone-palette.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  const cards = (list: Paint[], reference?: Paint | typeof target) =>
+    list.map((p) => (
+      <button
+        key={p.id}
+        className={"paint-card " + (p.id === selected.id ? "selected" : "")}
+        onClick={() => select(p)}
+        aria-label={`${p.name}, ${p.id}. ${reference ? explain(reference, p) : "Explore color"}`}
+      >
+        <span
+          className="card-color"
+          style={{ background: p.hex, color: ink(p) }}
+        >
+          {p.id === selected.id && <Check size={17} />}
+          <span>{p.id}</span>
+        </span>
+        <span className="card-name">{p.name}</span>
+        {reference && (
+          <span className="card-explanation">{explain(reference, p)}</span>
+        )}
+      </button>
+    ));
+  return (
+    <>
+      <a
+        className="skip-link"
+        href="#workspace"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById("workspace")?.focus();
+          document.getElementById("workspace")?.scrollIntoView();
+        }}
+      >
+        Skip to colors
+      </a>
+      <header className="site-header">
+        <a
+          className="wordmark"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            update({ ...defaults, pins: state.pins });
+            setQueryDraft("");
+          }}
+        >
+          <span className="brand-symbol">
+            <i />
+            <i />
+            <i />
+          </span>
+          undertone<span className="brand-period">.</span>
+        </a>
+        <span className="header-note">A FIELD GUIDE TO PAINT COLOR</span>
+        <div className="header-actions">
+          <button className="text-button" onClick={() => setAbout(true)}>
+            <CircleHelp size={16} />
+            <span>About the colors</span>
+          </button>
+          <button
+            className="icon-button"
+            aria-label={`Theme: ${theme}. Switch to ${theme === "light" ? "dark" : theme === "dark" ? "system" : "light"}`}
+            title={`Theme: ${theme}`}
+            onClick={() =>
+              setTheme(
+                theme === "light"
+                  ? "dark"
+                  : theme === "dark"
+                    ? "system"
+                    : "light",
+              )
+            }
+          >
+            {dark ? <Moon size={19} /> : <Sun size={19} />}
+          </button>
+          <button
+            className="share-button"
+            onClick={() =>
+              copy(location.href, "Link copied. Your view is ready to share.")
+            }
+          >
+            <Share2 size={15} /> Share view
+          </button>
+        </div>
+      </header>
+      <main>
+        <section className="intro">
+          <div>
+            <div className="eyebrow">
+              <span /> {paints.length.toLocaleString()} COLORS. ONE GOOD PLACE
+              TO START.
+            </div>
+            <h1>
+              A little closer to <em>your color.</em>
+            </h1>
+            <p>Find a shade you love. Then see where it takes you.</p>
+          </div>
+          <div className="intro-palette" aria-hidden="true">
+            {["#ddd9ca", "#bac0a7", "#8e9c85", "#627b65", "#354f43"].map(
+              (c, i) => (
+                <i
+                  key={c}
+                  style={{
+                    background: c,
+                    transform: `rotate(${(i - 2) * 7}deg) translateY(${Math.abs(i - 2) * 4}px)`,
+                  }}
+                />
+              ),
+            )}
+          </div>
+        </section>
+        <div className="workspace" id="workspace" tabIndex={-1}>
+          <section className="explorer" aria-label="Color catalog">
+            <div className="explorer-top">
+              <div className="section-heading">
+                <span className="tiny-label">THE COLOR LIBRARY</span>
+                <h2>Find your starting point</h2>
+              </div>
+              <span className="brand-badge">
+                Benjamin Moore <span>↗</span>
+              </span>
+            </div>
+            <form
+              className="search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                update({ query: queryDraft });
+              }}
+            >
+              <Search size={19} />
+              <input
+                aria-label="Search paint names, codes, or CSS colors"
+                placeholder="Search a name, paint code, hex, or oklch…"
+                value={queryDraft}
+                onChange={(e) => {
+                  setQueryDraft(e.target.value);
+                  update({ query: e.target.value, mode: "explore" }, true);
+                }}
+              />
+              {queryDraft && (
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label="Clear search"
+                  onClick={() => {
+                    setQueryDraft("");
+                    update({ query: "" });
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              )}
+              <kbd>↵</kbd>
+            </form>
+            <div className="workspace-toolbar">
+              <div className="modes">
+                {(["explore", "between", "compare"] as const).map((m) => (
+                  <button
+                    key={m}
+                    className={state.mode === m ? "active" : ""}
+                    onClick={() =>
+                      update({
+                        mode: m,
+                        ...(m === "between" && state.mode !== "between"
+                          ? { start: selected.id }
+                          : {}),
+                      })
+                    }
+                  >
+                    {m === "explore"
+                      ? "Explore"
+                      : m === "between"
+                        ? "Between two"
+                        : "Compare"}
+                    {m === "compare" && pins.length > 0 && (
+                      <span>{pins.length}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {state.mode !== "compare" && (
+                <div className="view-toggle" aria-label="Catalog view">
+                  {(
+                    [
+                      ["map", Map, "Map"],
+                      ["grid", Grid2X2, "Swatches"],
+                      ["3d", Box, "3D"],
+                    ] as const
+                  ).map(([view, Icon, label]) => (
+                    <button
+                      key={view}
+                      aria-pressed={state.view === view}
+                      className={state.view === view ? "active" : ""}
+                      onClick={() => update({ view })}
+                    >
+                      <Icon size={15} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {state.mode === "explore" && (
+              <>
+                <div className="filters">
+                  <SlidersHorizontal size={14} />
+                  <select
+                    aria-label="Color family"
+                    value={state.family}
+                    onChange={(e) => update({ family: e.target.value })}
+                  >
+                    {families.map((f) => (
+                      <option key={f}>{f}</option>
+                    ))}
+                  </select>
+                  <span className="filter-divider" />
+                  <select
+                    aria-label="Lightness filter"
+                    value={state.lightness}
+                    onChange={(e) =>
+                      update({
+                        lightness: e.target.value as ViewState["lightness"],
+                      })
+                    }
+                  >
+                    <option value="all">Any lightness</option>
+                    <option value="light">Light</option>
+                    <option value="mid">Mid-tone</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                  <span className="result-count">
+                    {results.length.toLocaleString()}{" "}
+                    {target ? "closest matches" : "colors"}
+                  </span>
+                </div>
+                {target && (
+                  <div className="match-banner">
+                    <i style={{ background: target.hex }} />
+                    <div>
+                      Matching <strong>{state.query}</strong>
+                      <small>
+                        {target.outOfGamut
+                          ? "Target is outside sRGB; preview is clipped. Matching uses the original color."
+                          : "Closest digital colors, ranked by OKLab distance."}
+                      </small>
+                    </div>
+                  </div>
+                )}
+                {invalidColor && (
+                  <div className="empty-state compact">
+                    That color could not be read. Try #a8b49c or oklch(70% 0.05
+                    140). Use an opaque color.
+                  </div>
+                )}
+                {!invalidColor &&
+                  (results.length ? (
+                    state.view === "grid" ? (
+                      <div className="catalog-grid">
+                        {cards(results.slice(0, visibleCount), target)}
+                      </div>
+                    ) : (
+                      <ColorAtlas
+                        paints={results}
+                        selected={selected}
+                        is3d={state.view === "3d"}
+                        onSelect={select}
+                      />
+                    )
+                  ) : (
+                    <div className="empty-state">
+                      <Search size={28} />
+                      <h3>No colors found</h3>
+                      <p>Try a different name or clear your filters.</p>
+                      <button
+                        onClick={() => {
+                          setQueryDraft("");
+                          update({
+                            query: "",
+                            family: "All colors",
+                            lightness: "all",
+                          });
+                        }}
+                      >
+                        Reset search
+                      </button>
+                    </div>
+                  ))}
+                {state.view === "grid" && visibleCount < results.length && (
+                  <button
+                    className="load-more"
+                    onClick={() => setVisibleCount((n) => n + 80)}
+                  >
+                    Show 80 more colors <ChevronRight size={14} />
+                  </button>
+                )}
+                {state.view !== "grid" && results.length > 0 && (
+                  <div className="map-footer">
+                    <span>
+                      {target
+                        ? "CLOSEST PAINT MATCHES"
+                        : "A FEW PLACES TO BEGIN"}
+                    </span>
+                    <div className="mini-picks">
+                      {(target
+                        ? results.slice(0, 6)
+                        : featured.map((id) => byId.get(id)!)
+                      ).map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => select(p)}
+                          title={p.name}
+                        >
+                          <i style={{ background: p.hex }} />
+                          <span>{p.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            {state.mode === "between" && (
+              <div className="between-panel">
+                <p className="panel-intro">
+                  Two colors. The real paints in between.
+                </p>
+                <label className="endpoint-search">
+                  <Search size={14} />
+                  <input
+                    aria-label="Find second color"
+                    placeholder="Find the second color by name or code…"
+                    value={endSearch}
+                    onChange={(e) => setEndSearch(e.target.value)}
+                  />
+                </label>
+                <div className="endpoints">
+                  <div style={{ background: start.hex, color: ink(start) }}>
+                    <small>FROM</small>
+                    <strong>{start.name}</strong>
+                    <span>{start.id}</span>
+                  </div>
+                  <ArrowRight size={20} />
+                  <div style={{ background: end.hex, color: ink(end) }}>
+                    <small>TO</small>
+                    <select
+                      aria-label="Between endpoint"
+                      value={end.id}
+                      onChange={(e) => update({ end: e.target.value })}
+                    >
+                      {paints
+                        .filter(
+                          (p) =>
+                            p.id === end.id ||
+                            `${p.name} ${p.id}`
+                              .toLowerCase()
+                              .includes(endSearch.toLowerCase()),
+                        )
+                        .map((p) => (
+                          <option value={p.id} key={p.id}>
+                            {p.name} · {p.id}
+                          </option>
+                        ))}
+                    </select>
+                    <span>{end.id}</span>
+                  </div>
+                </div>
+                <div className="endpoint-actions">
+                  <button
+                    className="text-button"
+                    disabled={start.id === selected.id}
+                    onClick={() => update({ start: selected.id })}
+                  >
+                    Use selected as start
+                  </button>
+                  <button
+                    className="text-button"
+                    disabled={end.id === selected.id}
+                    onClick={() => update({ end: selected.id })}
+                  >
+                    Use selected as end
+                  </button>
+                </div>
+                <label className="tolerance">
+                  Path tolerance{" "}
+                  <input
+                    aria-label="Path tolerance"
+                    type="range"
+                    min=".002"
+                    max=".06"
+                    step=".001"
+                    value={state.tolerance}
+                    onChange={(e) =>
+                      update({ tolerance: Number(e.target.value) }, true)
+                    }
+                  />
+                  <span>
+                    {state.tolerance < 0.01
+                      ? "Narrow"
+                      : state.tolerance < 0.025
+                        ? "Balanced"
+                        : "Broad"}
+                  </span>
+                </label>
+                <p className="muted small">
+                  Paints near the straight OKLab path, ordered from your
+                  starting color to the endpoint. This is a digital transition,
+                  not a paint-mixing recipe.
+                </p>
+                {state.view !== "grid" && (
+                  <ColorAtlas
+                    paints={[start, ...path.map((x) => x.paint), end]}
+                    selected={start}
+                    end={end}
+                    focus={selected}
+                    is3d={state.view === "3d"}
+                    onSelect={select}
+                  />
+                )}
+                <div className="list-title">
+                  <h3>{path.length} paints along the way</h3>
+                  <button
+                    className="text-button"
+                    onClick={() => update({ start: end.id, end: start.id })}
+                  >
+                    Swap ends ↔
+                  </button>
+                </div>
+                {path.length ? (
+                  <div className="catalog-grid">
+                    {cards(
+                      path.slice(0, visibleCount).map((x) => x.paint),
+                      start,
+                    )}
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <h3>No paints on this path yet</h3>
+                    <p>
+                      {start.id === end.id
+                        ? "Choose two different colors."
+                        : "Broaden the tolerance or try another endpoint."}
+                    </p>
+                  </div>
+                )}
+                {visibleCount < path.length && (
+                  <button
+                    className="load-more"
+                    onClick={() => setVisibleCount((n) => n + 80)}
+                  >
+                    Show more paints
+                  </button>
+                )}
+              </div>
+            )}
+            {state.mode === "compare" && (
+              <div className="comparison">
+                <div className="list-title">
+                  <h3>Your colors, side by side</h3>
+                  <button
+                    className="text-button"
+                    onClick={exportPalette}
+                    disabled={!pins.length}
+                  >
+                    <Download size={14} /> Export
+                  </button>
+                </div>
+                <Surround value={surround} onChange={setSurround} />
+                {pins.length ? (
+                  <div className={"comparison-surround surround-" + surround}>
+                    {pins.map((p, i) => (
+                      <div className="comparison-color" key={p.id}>
+                        <div style={{ background: p.hex, color: ink(p) }}>
+                          <button
+                            className="icon-button"
+                            aria-label={`Remove ${p.name}`}
+                            onClick={() => pin(p)}
+                          >
+                            <X size={15} />
+                          </button>
+                          <button
+                            className="compare-select"
+                            onClick={() => select(p)}
+                          >
+                            {p.name}
+                            <small>{p.id}</small>
+                          </button>
+                        </div>
+                        <div className="comparison-meta">
+                          <span>LRV {p.lrv.toFixed(1)}</span>
+                          <button
+                            disabled={i === 0}
+                            className="icon-button"
+                            aria-label={`Move ${p.name} left`}
+                            onClick={() => {
+                              const ids = [...state.pins];
+                              [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
+                              update({ pins: ids });
+                            }}
+                          >
+                            <ArrowLeft size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <Layers size={30} />
+                    <h3>Give your favorites some company.</h3>
+                    <p>
+                      Save a color using the heart beside its name, then compare
+                      it here.
+                    </p>
+                    <button onClick={() => pin(selected)}>
+                      Save {selected.name}
+                    </button>
+                  </div>
+                )}
+                <p className="muted small">
+                  The surround changes your viewing context. The paint values
+                  stay the same.
+                </p>
+              </div>
+            )}
+          </section>
+          <aside className="detail-panel" aria-label="Selected paint">
+            <div className={"hero-surround surround-" + surround}>
+              <div
+                className="hero-swatch"
+                style={{ background: selected.hex, color: ink(selected) }}
+              >
+                <span className="swatch-label">BENJAMIN MOORE</span>
+                <button
+                  className="swatch-copy"
+                  onClick={() => copy(selected.hex)}
+                  aria-label="Copy hex color"
+                >
+                  <Copy size={15} />
+                </button>
+                <span className="swatch-code">{selected.id}</span>
+              </div>
+            </div>
+            <div className="detail-content">
+              <div className="detail-title">
+                <div>
+                  <span className="tiny-label">YOUR STARTING COLOR</span>
+                  <h2>{selected.name}</h2>
+                </div>
+                <button
+                  className={
+                    "save-color " +
+                    (state.pins.includes(selected.id) ? "saved" : "")
+                  }
+                  aria-label={`${state.pins.includes(selected.id) ? "Unsave" : "Save"} ${selected.name}`}
+                  aria-pressed={state.pins.includes(selected.id)}
+                  onClick={() => pin(selected)}
+                >
+                  <Heart
+                    size={20}
+                    fill={
+                      state.pins.includes(selected.id) ? "currentColor" : "none"
+                    }
+                  />
+                </button>
+              </div>
+              <div className="color-values">
+                <button onClick={() => copy(selected.hex)}>
+                  {selected.hex} <Copy size={12} />
+                </button>
+                <span>
+                  LRV <strong>{selected.lrv.toFixed(1)}</strong>
+                </span>
+              </div>
+              <button
+                className="oklch-value"
+                onClick={() =>
+                  copy(
+                    `oklch(${(selected.l * 100).toFixed(2)}% ${selected.c.toFixed(4)} ${selected.h.toFixed(2)})`,
+                  )
+                }
+              >
+                oklch({(selected.l * 100).toFixed(1)}% {selected.c.toFixed(3)}{" "}
+                {selected.h.toFixed(1)}) <Copy size={11} />
+              </button>
+              <div className="section-rule" />
+              <div className="direction-heading">
+                <h3>This color, but…</h3>
+                {history.length > 0 && (
+                  <button onClick={undo} className="text-button">
+                    <Undo2 size={13} /> Back
+                  </button>
+                )}
+              </div>
+              <p className="muted small">One small step. Another real paint.</p>
+              <div className="direction-grid">
+                {(Object.keys(directionLabels) as Direction[]).map((d) => {
+                  const Icon = icons[d],
+                    p = steps[d][0];
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => takeStep(d)}
+                      disabled={!p}
+                      title={
+                        p
+                          ? `${p.name} · ${explain(selected, p)}`
+                          : "No nearby paint in this direction"
+                      }
+                    >
+                      <Icon size={16} />
+                      <span>{directionLabels[d]}</span>
+                      {p ? (
+                        <i style={{ background: p.hex }} />
+                      ) : (
+                        <span className="no-step">—</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {step && (
+                <div className="step-note" role="status">
+                  <span>
+                    {directionLabels[step.direction]} from{" "}
+                    <button onClick={() => select(step.from)}>
+                      {step.from.name}
+                    </button>
+                  </span>
+                  <strong>{explain(step.from, selected)}</strong>
+                </div>
+              )}
+              <div className="section-rule" />
+              <Surround value={surround} onChange={setSurround} />
+              <a
+                className="manufacturer-link"
+                href={`https://www.benjaminmoore.com/en-us/paint-colors/color/${selected.id.toLowerCase()}/${selected.name
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/-$/, "")}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View at Benjamin Moore <span>↗</span>
+              </a>
+            </div>
+          </aside>
+        </div>
+        <section className="neighbors">
+          <div className="list-title">
+            <div>
+              <span className="tiny-label">STAY IN THE NEIGHBORHOOD</span>
+              <h2>Close to {selected.name}</h2>
+            </div>
+            <span className="muted small">
+              Similar in color. Different in character.
+            </span>
+          </div>
+          <div className="neighbor-grid">{cards(neighbors, selected)}</div>
+        </section>
+        {pins.length > 0 && (
+          <section className="saved-tray">
+            <div>
+              <Heart size={16} />
+              <strong>Your shortlist</strong>
+              <span>{pins.length}/12</span>
+            </div>
+            <div className="tray-colors">
+              {pins.map((p) => (
+                <button
+                  key={p.id}
+                  title={p.name}
+                  aria-label={`Select saved ${p.name}`}
+                  style={{ background: p.hex, color: ink(p) }}
+                  onClick={() => select(p)}
+                >
+                  {p.id}
+                </button>
+              ))}
+            </div>
+            <button
+              className="text-button"
+              onClick={() => {
+                update({ mode: "compare" });
+                document
+                  .getElementById("workspace")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Compare <ArrowRight size={15} />
+            </button>
+          </section>
+        )}
+        <footer>
+          <span className="footer-brand">undertone.</span>
+          <p>
+            Digital colors are a starting point. Always sample paint in your
+            space.
+          </p>
+          <button className="text-button" onClick={() => setAbout(true)}>
+            Color science & sources <ChevronRight size={13} />
+          </button>
+        </footer>
+      </main>
+      <div className="toast" role="status" aria-live="polite">
+        {notice && (
+          <span>
+            <Check size={16} />
+            {notice}
+          </span>
+        )}
+      </div>
+      {about && (
+        <div className="modal-backdrop" onClick={() => setAbout(false)}>
+          <About onClose={() => setAbout(false)} />
+        </div>
+      )}
+    </>
+  );
+}
+function Surround({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (s: string) => void;
+}) {
+  return (
+    <div className="surround-control">
+      <span>Viewing surround</span>
+      <div>
+        {["white", "gray", "black"].map((s) => (
+          <button
+            key={s}
+            aria-label={`${s} viewing surround`}
+            aria-pressed={value === s}
+            className={"surround-option " + s + (s === value ? " active" : "")}
+            onClick={() => onChange(s)}
+          >
+            {s === value && <Check size={11} />}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+function About({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = document.querySelector<HTMLDialogElement>("dialog")!;
+    dialog.showModal();
+    return () => {
+      dialog.close();
+      previous?.focus();
+    };
+  }, []);
+  return (
+    <dialog
+      className="about-modal"
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        className="modal-close icon-button"
+        aria-label="Close about"
+        onClick={onClose}
+      >
+        <X size={21} />
+      </button>
+      <Palette size={30} />
+      <div className="eyebrow">A FIELD GUIDE, NOT A FORMULA</div>
+      <h2>
+        Good color starts
+        <br />
+        with a little curiosity.
+      </h2>
+      <p>
+        Undertone is an independent explorer for{" "}
+        {paints.length.toLocaleString()} Benjamin Moore colors. The catalog is
+        bundled with the app: searches and matching happen entirely in your
+        browser.
+      </p>
+      <h3>How the colors work</h3>
+      <p>
+        Culori converts manufacturer sRGB values to OKLab and OKLCH. Nearest
+        matches use Euclidean distance in OKLab. Direction buttons look for a
+        small change in one property while limiting changes in the others.
+        Sometimes there is no suitable next step.
+      </p>
+      <p>
+        Hue steps are disabled near gray, where hue has little perceptual
+        meaning. Color-family labels are approximate, computed groupings.
+        “Between” finds catalog paints near the straight OKLab segment; it does
+        not simulate pigment mixing.
+      </p>
+      <h3>What the numbers mean</h3>
+      <p>
+        LRV is the manufacturer’s light reflectance value. It is separate from
+        OKLCH lightness. Match explanations describe the published digital
+        swatches, not measured performance on your wall.
+      </p>
+      <h3>Sources & your privacy</h3>
+      <p>
+        The manufacturer catalog was retrieved{" "}
+        {new Date(source.retrievedAt).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+          timeZone: "America/Chicago",
+        })}{" "}
+        (US Central). Catalog updates are explicit, versioned snapshots. Saved
+        colors and theme preferences live on this device; shared URLs include
+        your selected colors and filters. No account or backend is needed.
+      </p>
+      <p>
+        <a
+          href="https://www.benjaminmoore.com/en-us/paint-colors"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Benjamin Moore catalog ↗
+        </a>{" "}
+        ·{" "}
+        <a href="https://culorijs.org/" target="_blank" rel="noreferrer">
+          Culori ↗
+        </a>{" "}
+        ·{" "}
+        <a
+          href="https://bottosson.github.io/posts/oklab/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          About OKLab ↗
+        </a>
+      </p>
+      <p className="muted small">
+        Not affiliated with Benjamin Moore. Color names and trademarks belong to
+        their respective owners. Screens, lighting, surfaces, and sheen affect
+        appearance. Test physical samples before choosing paint.
+      </p>
+      <button className="primary-button" onClick={onClose}>
+        Back to exploring <ArrowRight size={16} />
+      </button>
+    </dialog>
+  );
+}
