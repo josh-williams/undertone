@@ -8,14 +8,11 @@ import {
   ChevronRight,
   CircleHelp,
   Copy,
-  Download,
   Grid2X2,
   Heart,
-  Layers,
   Map,
   Moon,
   Palette,
-  Plus,
   Search,
   Share2,
   SlidersHorizontal,
@@ -32,7 +29,6 @@ import {
   directional,
   directionLabels,
   explain,
-  between,
   families,
   inFamily,
   ink,
@@ -46,9 +42,11 @@ import {
   readPreference,
   savePreference,
   type ViewState,
+  MAX_PALETTE_SIZE,
 } from "./state";
 import { ColorAtlas } from "./ColorAtlas";
 import { NeighborExplorer } from "./NeighborExplorer";
+import { ComparisonExplorer } from "./ComparisonExplorer";
 import source from "../data/benjamin-moore/source.json";
 
 function storedPins(): string[] {
@@ -57,7 +55,7 @@ function storedPins(): string[] {
     return Array.isArray(p)
       ? p
           .filter((x): x is string => typeof x === "string" && byId.has(x))
-          .slice(0, 12)
+          .slice(0, MAX_PALETTE_SIZE)
       : [];
   } catch {
     return [];
@@ -74,15 +72,13 @@ function initialState() {
       : ["white", "gray", "black"].includes(savedSurround ?? "")
         ? (savedSurround as ViewState["surround"])
         : "gray",
-    start: byId.has(state.start) ? state.start : defaults.start,
     paint: byId.has(state.paint) ? state.paint : defaults.paint,
-    end: byId.has(state.end) ? state.end : defaults.end,
-    pins: (new URLSearchParams(location.hash.slice(1)).has("pins")
+    pins: (params.has("pins") || params.get("mode") === "between"
       ? state.pins
       : storedPins()
     )
       .filter((id) => byId.has(id))
-      .slice(0, 12),
+      .slice(0, MAX_PALETTE_SIZE),
   };
 }
 const icons = {
@@ -105,7 +101,6 @@ export function App() {
   const surround = state.surround;
   const setSurround = (surround: string) =>
     update({ surround: surround as ViewState["surround"] });
-  const [endSearch, setEndSearch] = useState("");
   const [notice, setNotice] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [step, setStep] = useState<{
@@ -116,8 +111,6 @@ export function App() {
   const [visibleCount, setVisibleCount] = useState(80);
   const [queryDraft, setQueryDraft] = useState(state.query);
   const selected = byId.get(state.paint) ?? byId.get(defaults.paint)!;
-  const start = byId.get(state.start) ?? byId.get(defaults.start)!;
-  const end = byId.get(state.end) ?? byId.get(defaults.end)!;
   const dark = theme === "dark" || (theme === "system" && systemDark);
   // Apply synchronously so canvas and browser UI use the same theme on this render.
   document.documentElement.dataset.theme = dark ? "dark" : "light";
@@ -173,14 +166,7 @@ export function App() {
   }, [notice]);
   useEffect(() => {
     setVisibleCount(80);
-  }, [
-    state.query,
-    state.family,
-    state.lightness,
-    state.mode,
-    state.end,
-    state.tolerance,
-  ]);
+  }, [state.query, state.family, state.lightness, state.mode, state.tolerance]);
   function select(p: Paint) {
     if (p.id === selected.id) return;
     setHistory((h) => [...h.slice(-19), selected.id]);
@@ -190,8 +176,10 @@ export function App() {
   function pin(p: Paint) {
     if (state.pins.includes(p.id))
       update({ pins: state.pins.filter((id) => id !== p.id) });
-    else if (pins.length < 12) update({ pins: [...state.pins, p.id] });
-    else setNotice("Your comparison tray holds up to 12 colors.");
+    else if (pins.length < MAX_PALETTE_SIZE)
+      update({ pins: [...state.pins, p.id] });
+    else
+      setNotice(`Your comparison tray holds up to ${MAX_PALETTE_SIZE} colors.`);
   }
   async function copy(text: string, label = "Copied to clipboard") {
     try {
@@ -231,10 +219,6 @@ export function App() {
         ? nearest(target, filtered, 24)
         : [...filtered].sort((a, b) => a.h - b.h || b.l - a.l),
     [filtered, target],
-  );
-  const path = useMemo(
-    () => between(start, end, state.tolerance),
-    [start, end, state.tolerance],
   );
   const neighbors = useMemo(
     () =>
@@ -406,64 +390,59 @@ export function App() {
             <div className="explorer-top">
               <div className="section-heading">
                 <span className="tiny-label">THE COLOR LIBRARY</span>
-                <h2>Find your starting point</h2>
+                <h2>
+                  {state.mode === "compare"
+                    ? "Compare & discover"
+                    : "Find your starting point"}
+                </h2>
               </div>
               <span className="brand-badge">
                 Benjamin Moore <span>↗</span>
               </span>
             </div>
-            <form
-              className="search"
-              onSubmit={(e) => {
-                e.preventDefault();
-                update({ query: queryDraft });
-              }}
-            >
-              <Search size={19} />
-              <input
-                aria-label="Search paint names, codes, or CSS colors"
-                placeholder="Search a name, paint code, hex, or oklch…"
-                value={queryDraft}
-                onChange={(e) => {
-                  setQueryDraft(e.target.value);
-                  update({ query: e.target.value, mode: "explore" }, true);
+            {state.mode === "explore" && (
+              <form
+                className="search"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  update({ query: queryDraft });
                 }}
-              />
-              {queryDraft && (
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label="Clear search"
-                  onClick={() => {
-                    setQueryDraft("");
-                    update({ query: "" });
+              >
+                <Search size={19} />
+                <input
+                  aria-label="Search paint names, codes, or CSS colors"
+                  placeholder="Search a name, paint code, hex, or oklch…"
+                  value={queryDraft}
+                  onChange={(e) => {
+                    setQueryDraft(e.target.value);
+                    update({ query: e.target.value, mode: "explore" }, true);
                   }}
-                >
-                  <X size={16} />
-                </button>
-              )}
-              <kbd>↵</kbd>
-            </form>
+                />
+                {queryDraft && (
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Clear search"
+                    onClick={() => {
+                      setQueryDraft("");
+                      update({ query: "" });
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+                <kbd>↵</kbd>
+              </form>
+            )}
             <div className="workspace-toolbar">
               <div className="modes">
-                {(["explore", "between", "compare"] as const).map((m) => (
+                {(["explore", "compare"] as const).map((m) => (
                   <button
                     key={m}
                     className={state.mode === m ? "active" : ""}
-                    onClick={() =>
-                      update({
-                        mode: m,
-                        ...(m === "between" && state.mode !== "between"
-                          ? { start: selected.id }
-                          : {}),
-                      })
-                    }
+                    onClick={() => update({ mode: m })}
                   >
-                    {m === "explore"
-                      ? "Explore"
-                      : m === "between"
-                        ? "Between two"
-                        : "Compare"}
+                    {m === "explore" ? "Explore" : "Compare"}
                     {m === "compare" && pins.length > 0 && (
                       <span>{pins.length}</span>
                     )}
@@ -611,208 +590,17 @@ export function App() {
                 )}
               </>
             )}
-            {state.mode === "between" && (
-              <div className="between-panel">
-                <p className="panel-intro">
-                  Two colors. The real paints in between.
-                </p>
-                <label className="endpoint-search">
-                  <Search size={14} />
-                  <input
-                    aria-label="Find second color"
-                    placeholder="Find the second color by name or code…"
-                    value={endSearch}
-                    onChange={(e) => setEndSearch(e.target.value)}
-                  />
-                </label>
-                <div className="endpoints">
-                  <div style={{ background: start.hex, color: ink(start) }}>
-                    <small>FROM</small>
-                    <strong>{start.name}</strong>
-                    <span>{start.id}</span>
-                  </div>
-                  <ArrowRight size={20} />
-                  <div style={{ background: end.hex, color: ink(end) }}>
-                    <small>TO</small>
-                    <select
-                      aria-label="Between endpoint"
-                      value={end.id}
-                      onChange={(e) => update({ end: e.target.value })}
-                    >
-                      {paints
-                        .filter(
-                          (p) =>
-                            p.id === end.id ||
-                            `${p.name} ${p.id}`
-                              .toLowerCase()
-                              .includes(endSearch.toLowerCase()),
-                        )
-                        .map((p) => (
-                          <option value={p.id} key={p.id}>
-                            {p.name} · {p.id}
-                          </option>
-                        ))}
-                    </select>
-                    <span>{end.id}</span>
-                  </div>
-                </div>
-                <div className="endpoint-actions">
-                  <button
-                    className="text-button"
-                    disabled={start.id === selected.id}
-                    onClick={() => update({ start: selected.id })}
-                  >
-                    Use selected as start
-                  </button>
-                  <button
-                    className="text-button"
-                    disabled={end.id === selected.id}
-                    onClick={() => update({ end: selected.id })}
-                  >
-                    Use selected as end
-                  </button>
-                </div>
-                <label className="tolerance">
-                  Path tolerance{" "}
-                  <input
-                    aria-label="Path tolerance"
-                    type="range"
-                    min=".002"
-                    max=".06"
-                    step=".001"
-                    value={state.tolerance}
-                    onChange={(e) =>
-                      update({ tolerance: Number(e.target.value) }, true)
-                    }
-                  />
-                  <span>
-                    {state.tolerance < 0.01
-                      ? "Narrow"
-                      : state.tolerance < 0.025
-                        ? "Balanced"
-                        : "Broad"}
-                  </span>
-                </label>
-                <p className="muted small">
-                  Paints near the straight OKLab path, ordered from your
-                  starting color to the endpoint. This is a digital transition,
-                  not a paint-mixing recipe.
-                </p>
-                {state.view !== "grid" && (
-                  <ColorAtlas
-                    paints={[start, ...path.map((x) => x.paint), end]}
-                    selected={start}
-                    end={end}
-                    focus={selected}
-                    is3d={state.view === "3d"}
-                    onSelect={select}
-                  />
-                )}
-                <div className="list-title">
-                  <h3>{path.length} paints along the way</h3>
-                  <button
-                    className="text-button"
-                    onClick={() => update({ start: end.id, end: start.id })}
-                  >
-                    Swap ends ↔
-                  </button>
-                </div>
-                {path.length ? (
-                  <div className="catalog-grid">
-                    {cards(
-                      path.slice(0, visibleCount).map((x) => x.paint),
-                      start,
-                    )}
-                  </div>
-                ) : (
-                  <div className="empty-state">
-                    <h3>No paints on this path yet</h3>
-                    <p>
-                      {start.id === end.id
-                        ? "Choose two different colors."
-                        : "Broaden the tolerance or try another endpoint."}
-                    </p>
-                  </div>
-                )}
-                {visibleCount < path.length && (
-                  <button
-                    className="load-more"
-                    onClick={() => setVisibleCount((n) => n + 80)}
-                  >
-                    Show more paints
-                  </button>
-                )}
-              </div>
-            )}
             {state.mode === "compare" && (
-              <div className="comparison">
-                <div className="list-title">
-                  <h3>Your colors, side by side</h3>
-                  <button
-                    className="text-button"
-                    onClick={exportPalette}
-                    disabled={!pins.length}
-                  >
-                    <Download size={14} /> Export
-                  </button>
-                </div>
-                <Surround value={surround} onChange={setSurround} />
-                {pins.length ? (
-                  <div className={"comparison-surround surround-" + surround}>
-                    {pins.map((p, i) => (
-                      <div className="comparison-color" key={p.id}>
-                        <div style={{ background: p.hex, color: ink(p) }}>
-                          <button
-                            className="icon-button"
-                            aria-label={`Remove ${p.name}`}
-                            onClick={() => pin(p)}
-                          >
-                            <X size={15} />
-                          </button>
-                          <button
-                            className="compare-select"
-                            onClick={() => select(p)}
-                          >
-                            {p.name}
-                            <small>{p.id}</small>
-                          </button>
-                        </div>
-                        <div className="comparison-meta">
-                          <span>LRV {p.lrv.toFixed(1)}</span>
-                          <button
-                            disabled={i === 0}
-                            className="icon-button"
-                            aria-label={`Move ${p.name} left`}
-                            onClick={() => {
-                              const ids = [...state.pins];
-                              [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]];
-                              update({ pins: ids });
-                            }}
-                          >
-                            <ArrowLeft size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty-state">
-                    <Layers size={30} />
-                    <h3>Give your favorites some company.</h3>
-                    <p>
-                      Save a color using the heart beside its name, then compare
-                      it here.
-                    </p>
-                    <button onClick={() => pin(selected)}>
-                      Save {selected.name}
-                    </button>
-                  </div>
-                )}
-                <p className="muted small">
-                  The surround changes your viewing context. The paint values
-                  stay the same.
-                </p>
-              </div>
+              <ComparisonExplorer
+                pins={pins}
+                inspected={selected}
+                state={state}
+                onChange={update}
+                onInspect={select}
+                onPin={pin}
+                onExport={exportPalette}
+                surround={<Surround value={surround} onChange={setSurround} />}
+              />
             )}
           </section>
           <aside className="detail-panel" aria-label="Selected paint">
@@ -835,7 +623,11 @@ export function App() {
             <div className="detail-content">
               <div className="detail-title">
                 <div>
-                  <span className="tiny-label">YOUR STARTING COLOR</span>
+                  <span className="tiny-label">
+                    {state.mode === "compare"
+                      ? "INSPECTING"
+                      : "YOUR STARTING COLOR"}
+                  </span>
                   <h2>{selected.name}</h2>
                 </div>
                 <button
@@ -954,7 +746,9 @@ export function App() {
             <div>
               <Heart size={16} />
               <strong>Your shortlist</strong>
-              <span>{pins.length}/12</span>
+              <span>
+                {pins.length}/{MAX_PALETTE_SIZE}
+              </span>
             </div>
             <div className="tray-colors">
               {pins.map((p) => (
@@ -1084,8 +878,9 @@ function About({ onClose }: { onClose: () => void }) {
       <p>
         Hue steps are disabled near gray, where hue has little perceptual
         meaning. Color-family labels are approximate, computed groupings.
-        “Between” finds catalog paints near the straight OKLab segment; it does
-        not simulate pigment mixing.
+        Compare finds catalog paints inside or near the volume spanned by your
+        selected colors. With two colors this becomes their connecting segment.
+        It does not simulate pigment mixing.
       </p>
       <h3>What the numbers mean</h3>
       <p>

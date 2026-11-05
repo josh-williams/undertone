@@ -1963,3 +1963,425 @@ footer > .text-button {
     padding: 18px 14px;
   }
 }
+
+.comparison-explorer {
+  padding-top: 22px;
+}
+.comparison-explorer > .list-title h3 {
+  font-size: 18px;
+  margin-top: 5px;
+  letter-spacing: -0.5px;
+}
+.comparison-view-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 17px;
+}
+.comparison-view-row .view-toggle button {
+  font-size: 11px;
+  gap: 5px;
+  padding: 7px 10px;
+}
+.comparison-add {
+  position: relative;
+  margin-bottom: 18px;
+}
+.comparison-add > label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--soft);
+  padding: 9px 12px;
+  color: var(--muted);
+  min-height: 40px;
+}
+.comparison-add input {
+  border: 0;
+  background: transparent;
+  outline: none;
+  min-width: 0;
+  width: 100%;
+  color: var(--ink);
+  font-size: 12px;
+}
+.comparison-add:focus-within > label {
+  border-color: #869977;
+}
+.comparison-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-height: 340px;
+  overflow-y: auto;
+  box-shadow: 0 7px 22px #0002;
+  z-index: 10;
+}
+.comparison-suggestions > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  text-align: left;
+  width: 100%;
+  font-size: 12px;
+}
+.comparison-suggestions > button:hover {
+  background: var(--accent-soft);
+}
+.comparison-suggestions i {
+  width: 27px;
+  height: 29px;
+  border-radius: 4px;
+  border: 1px solid #0001;
+  flex-shrink: 0;
+}
+.comparison-suggestions span {
+  flex: 1;
+}
+.comparison-suggestions small {
+  display: block;
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.comparison-suggestions p {
+  font-size: 12px;
+  padding: 15px;
+  color: var(--muted);
+}
+.comparison-space-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 2px 0 15px;
+}
+.nearby-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.nearby-switch input {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+}
+.comparison-space-controls select {
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--soft);
+  color: var(--ink);
+  font-size: 10px;
+  max-width: 180px;
+}
+.comparison-region-controls {
+  background: var(--accent-soft);
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+.comparison-region-controls label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+}
+.comparison-region-controls input {
+  flex: 1;
+  min-width: 30px;
+  accent-color: var(--accent);
+}
+.comparison-region-controls label > span {
+  min-width: 40px;
+  text-align: right;
+  font-size: 10px;
+  color: var(--muted);
+}
+.comparison-region-controls p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.comparison-space {
+  position: relative;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.comparison-space-key {
+  position: absolute;
+  top: 15px;
+  left: 17px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--muted);
+  font-size: 9px;
+  pointer-events: none;
+  z-index: 1;
+}
+.comparison-space-key > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.comparison-space-key i {
+  height: 5px;
+  width: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.comparison-space-key .saved-key {
+  height: 12px;
+  width: 12px;
+  border: 2px solid var(--panel);
+  outline: 1px solid var(--muted);
+  background: var(--accent-soft);
+}
+.comparison-svg {
+  display: block;
+  width: 100%;
+  outline-offset: -3px;
+}
+.comparison-svg.orbitable {
+  cursor: grab;
+  touch-action: none;
+}
+.comparison-svg.orbitable:active {
+  cursor: grabbing;
+}
+.selection-face {
+  fill: var(--accent);
+  opacity: 0.018;
+  stroke: none;
+  pointer-events: none;
+}
+.selection-edge {
+  stroke: var(--muted);
+  stroke-width: 0.7;
+  opacity: 0.28;
+  pointer-events: none;
+}
+.comparison-point {
+  cursor: pointer;
+  outline: none;
+}
+.comparison-selected-dot {
+  stroke: var(--panel);
+  stroke-width: 2.5;
+}
+.comparison-catalog-dot {
+  stroke: #0001;
+  stroke-width: 0.5;
+  opacity: 0.8;
+}
+.comparison-selected-dot.focused,
+.comparison-catalog-dot.focused,
+.comparison-point:focus-visible circle:not(.point-hit-area) {
+  stroke: var(--accent);
+  stroke-width: 3;
+  opacity: 1;
+}
+.comparison-inspector {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 14px 0 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.comparison-inspector > i {
+  width: 36px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid #0001;
+  border-radius: 4px;
+}
+.comparison-inspector > div {
+  flex: 1;
+  min-width: 0;
+}
+.comparison-inspector strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.comparison-inspector small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 9px;
+}
+.comparison-add-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 11px;
+  background: var(--accent);
+  color: var(--panel);
+  border-radius: 5px;
+  font-size: 11px;
+}
+.comparison-space-note {
+  margin-bottom: 15px;
+}
+.comparison-pinned-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 17px;
+}
+.comparison-pinned-list > div {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  min-width: 0;
+}
+.comparison-pinned-list > div.active {
+  background: var(--accent-soft);
+  border-color: #869977;
+}
+.comparison-pin-inspect {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+}
+.comparison-pin-inspect > span:first-child {
+  width: 13px;
+  color: var(--muted);
+  font-size: 8px;
+  flex-shrink: 0;
+}
+.comparison-pin-inspect > i {
+  width: 23px;
+  height: 28px;
+  border-radius: 3px;
+  border: 1px solid #0001;
+  flex-shrink: 0;
+}
+.comparison-pin-inspect > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.comparison-pin-inspect small {
+  display: block;
+  font-size: 8px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.comparison-pinned-list .icon-button {
+  margin-right: 3px;
+}
+.comparison-discover {
+  padding-top: 22px;
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.comparison-discover .list-title h3 {
+  font-size: 14px;
+}
+.comparison-candidates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.comparison-candidates > div {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  min-width: 0;
+}
+.comparison-candidates > div.active {
+  background: var(--accent-soft);
+}
+.comparison-candidates > div > button:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  padding: 9px;
+}
+.comparison-candidates i {
+  width: 26px;
+  height: 31px;
+  border-radius: 4px;
+  border: 1px solid #0001;
+  flex-shrink: 0;
+}
+.comparison-candidates span {
+  flex: 1;
+  min-width: 0;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.comparison-candidates small {
+  display: block;
+  color: var(--muted);
+  font-size: 8px;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.comparison-candidates svg {
+  color: var(--muted);
+}
+.comparison-candidates .icon-button {
+  margin-right: 3px;
+}
+.comparison-discover > .load-more {
+  margin: 16px 0 0;
+}
+.comparison-surround-control {
+  margin: 10px 0 18px;
+}
+@media (max-width: 600px) {
+  .comparison-candidates {
+    grid-template-columns: 1fr;
+  }
+  .comparison-space-controls {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .comparison-pinned-list {
+    gap: 5px;
+  }
+  .comparison-pin-inspect {
+    font-size: 10px;
+    gap: 5px;
+    padding: 7px 4px;
+  }
+  .comparison-pin-inspect > i {
+    width: 18px;
+    height: 24px;
+  }
+  .comparison-pinned-list .icon-button {
+    padding: 5px;
+    margin: 0;
+  }
+  .comparison-space-key {
+    font-size: 8px;
+    gap: 12px;
+  }
+}

@@ -116,7 +116,7 @@ describe("shareable view state", () => {
       query: "oklch(70% 0.05 140)",
       pins: ["OC-17", "HC-114"],
       view: "3d" as const,
-      mode: "between" as const,
+      mode: "compare" as const,
       tolerance: 0.023,
     };
     expect(decodeLocation(encodeLocation(state))).toEqual(state);

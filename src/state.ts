@@ -8,9 +8,10 @@ export const ViewSchema = Schema.Struct({
   nearPlane: Schema.Literal("la", "lb", "ab"),
   family: Schema.String,
   query: Schema.String,
-  mode: Schema.Literal("explore", "between", "compare"),
-  start: Schema.String,
-  end: Schema.String,
+  mode: Schema.Literal("explore", "compare"),
+  compareView: Schema.Literal("3d", "2d", "swatches"),
+  compareNearby: Schema.Literal("on", "off"),
+  comparePlane: Schema.Literal("la", "lb", "ab"),
   pins: Schema.Array(Schema.String),
   surround: Schema.Literal("white", "gray", "black"),
   lightness: Schema.Literal("all", "light", "mid", "dark"),
@@ -26,8 +27,9 @@ export const defaults: ViewState = {
   family: "All colors",
   query: "",
   mode: "explore",
-  start: "HC-114",
-  end: "OC-17",
+  compareView: "3d",
+  compareNearby: "off",
+  comparePlane: "la",
   surround: "gray",
   pins: [],
   lightness: "all",
@@ -36,6 +38,15 @@ export const defaults: ViewState = {
 export function decodeLocation(hash: string): ViewState {
   try {
     const q = new URLSearchParams(hash.replace(/^#\??/, ""));
+    // Keep previously shared Between links useful in the unified comparison view.
+    if (q.get("mode") === "between") {
+      q.set("mode", "compare");
+      q.set("compareNearby", "on");
+      const start = q.get("start") ?? q.get("paint") ?? "HC-114";
+      const end = q.get("end") ?? "OC-17";
+      if (!q.has("paint")) q.set("paint", start);
+      q.set("pins", [...new Set([start, end])].join(","));
+    }
     const value = {
       ...defaults,
       ...Object.fromEntries(q),
@@ -49,6 +60,7 @@ export function decodeLocation(hash: string): ViewState {
     return defaults;
   }
 }
+export const MAX_PALETTE_SIZE = 24;
 export function encodeLocation(state: ViewState) {
   const params = new URLSearchParams();
   Object.entries(state).forEach(([k, v]) => {
