@@ -23,6 +23,7 @@ Deploy the generated `dist/` directory to any static host. Hash-based URLs suppo
 - Hue/lightness map, searchable swatch catalog, and a draggable, zoomable 3D OKLab cloud. The swatch view provides a keyboard-accessible alternative to the canvas.
 - Directional steps to real catalog paints, previews of each next step, explanations, exploration undo, and browser history.
 - Between-two search with adjustable perpendicular distance from the OKLab segment. Endpoints are excluded; results are ordered along the segment. Inspecting candidates preserves the chosen endpoints.
+- A zoomed similar-color neighborhood centered on the selected paint, with orbitable 3D, three 2D projections, linked point/list highlighting, zoom, and 12/24/48 nearest-paint choices. Click a point or list entry to recenter. Neighborhood view, count, and projection are shareable in the URL.
 - Up to 12 saved colors, comparisons, independent viewing surround, palette JSON export, and shareable URLs.
 - System, light, and dark themes. Favorites and preferences are saved locally; shared URLs include the current palette, viewing surround, and view state.
 
@@ -56,6 +57,7 @@ Source: [Benjamin Moore color catalog](https://www.benjaminmoore.com/en-us/paint
 - `src/catalog-schema.ts`: shared Effect Schema validation.
 - `src/state.ts`: validated URL state and an Effect service/layer for browser storage with graceful failure handling.
 - `src/ColorAtlas.tsx`: high-DPI 2D canvas map and projected 3D cloud; no WebGL requirement.
+- `src/NeighborExplorer.tsx` and `src/neighborhood.ts`: local OKLab neighborhood UI and geometry. Coordinates are centered on the selected paint and uniformly scaled. Orthographic rotation preserves 3D distances; 2D projections can hide differences on the omitted axis. Identical colors may overlap and remain selectable in the ranked list.
 - `src/App.tsx`: responsive exploration interface.
 - `scripts/sync-colors.ts`: explicit build-independent catalog refresh.
 

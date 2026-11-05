@@ -48,6 +48,7 @@ import {
   type ViewState,
 } from "./state";
 import { ColorAtlas } from "./ColorAtlas";
+import { NeighborExplorer } from "./NeighborExplorer";
 import source from "../data/benjamin-moore/source.json";
 
 function storedPins(): string[] {
@@ -240,9 +241,9 @@ export function App() {
       nearest(
         selected,
         paints.filter((p) => p.id !== selected.id),
-        8,
+        Number(state.nearCount),
       ),
-    [selected],
+    [selected, state.nearCount],
   );
   const steps = useMemo(
     () =>
@@ -936,18 +937,18 @@ export function App() {
             </div>
           </aside>
         </div>
-        <section className="neighbors">
-          <div className="list-title">
-            <div>
-              <span className="tiny-label">STAY IN THE NEIGHBORHOOD</span>
-              <h2>Close to {selected.name}</h2>
-            </div>
-            <span className="muted small">
-              Similar in color. Different in character.
-            </span>
-          </div>
-          <div className="neighbor-grid">{cards(neighbors, selected)}</div>
-        </section>
+        <NeighborExplorer
+          selected={selected}
+          neighbors={neighbors}
+          view={state.nearView}
+          count={state.nearCount}
+          plane={state.nearPlane}
+          onChange={update}
+          onSelect={select}
+          swatches={
+            <div className="neighbor-grid">{cards(neighbors, selected)}</div>
+          }
+        />
         {pins.length > 0 && (
           <section className="saved-tray">
             <div>

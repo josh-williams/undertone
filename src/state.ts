@@ -3,6 +3,9 @@ import { Context, Effect, Layer, Schema } from "effect";
 export const ViewSchema = Schema.Struct({
   paint: Schema.String,
   view: Schema.Literal("map", "grid", "3d"),
+  nearView: Schema.Literal("2d", "3d", "swatches"),
+  nearCount: Schema.Literal("12", "24", "48"),
+  nearPlane: Schema.Literal("la", "lb", "ab"),
   family: Schema.String,
   query: Schema.String,
   mode: Schema.Literal("explore", "between", "compare"),
@@ -17,6 +20,9 @@ export type ViewState = typeof ViewSchema.Type;
 export const defaults: ViewState = {
   paint: "HC-114",
   view: "map",
+  nearView: "3d",
+  nearCount: "24",
+  nearPlane: "la",
   family: "All colors",
   query: "",
   mode: "explore",

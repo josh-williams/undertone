@@ -94,9 +94,6 @@ export function ColorAtlas({
       ctx.textAlign = "center";
       ctx.fillText("LIGHTNESS", 0, 0);
       ctx.restore();
-      ["NEUTRAL", "RED", "YELLOW", "GREEN", "BLUE", "VIOLET"].forEach((s, i) =>
-        ctx.fillText(s, i === 0 ? 35 : 60 + ((i - 1) * (w - 100)) / 4, h - 15),
-      );
     } else {
       ctx.beginPath();
       ctx.ellipse(
