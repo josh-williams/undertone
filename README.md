@@ -1,5 +1,7 @@
 # Undertone
 
+**[Try Undertone](https://undertone-paint-explorer.copper-krill-7197.chatgpt.site)** — public demo, no sign-in required.
+
 A static paint exploration workbench built with TypeScript, React, Effect, and Culori. Explore 4,068 Benjamin Moore colors and move between actual paints with “Lighter,” “More muted,” and hue-step buttons.
 
 ## Run
