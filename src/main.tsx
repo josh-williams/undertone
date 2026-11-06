@@ -14,8 +14,8 @@ class ErrorBoundary extends React.Component<
   render() {
     return this.state.error ? (
       <main className="fatal">
-        <h1>Something interrupted your exploration.</h1>
-        <p>Your saved colors are still on this device.</p>
+        <h1>Unable to load the app.</h1>
+        <p>Saved colors remain on this device.</p>
         <button
           onClick={() => {
             location.hash = "";

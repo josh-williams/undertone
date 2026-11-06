@@ -151,12 +151,8 @@ export function NeighborExplorer({
     <section className="neighbors" aria-labelledby="neighbors-title">
       <div className="list-title neighbor-heading">
         <div>
-          <span className="tiny-label">STAY IN THE NEIGHBORHOOD</span>
-          <h2 id="neighbors-title">Close to {selected.name}</h2>
-          <p>
-            Explore the space around your color. Pick a neighbor to make it your
-            new center.
-          </p>
+          <h2 id="neighbors-title">Similar to {selected.name}</h2>
+          <p>Select a paint to view its nearest matches.</p>
         </div>
         <div className="view-toggle" aria-label="Similar colors view">
           {(
@@ -182,7 +178,7 @@ export function NeighborExplorer({
       <div className="neighborhood-shell">
         <div className="neighborhood-toolbar">
           <label>
-            Neighborhood{" "}
+            Results{" "}
             <select
               aria-label="Number of similar colors"
               value={count}
@@ -227,7 +223,7 @@ export function NeighborExplorer({
                 <i style={{ background: selected.hex }} />
                 <span>
                   {selected.name}
-                  <small>YOUR CENTER · {selected.id}</small>
+                  <small>{selected.id}</small>
                 </span>
               </div>
               <svg
@@ -434,7 +430,7 @@ export function NeighborExplorer({
                     {active.name} <small>{active.id}</small>
                   </strong>
                   <span>{explain(selected, active)}</span>
-                  <small>Click to explore this paint</small>
+                  <small>Click to select this paint</small>
                 </div>
               )}
               <div className="neighborhood-plot-footer">

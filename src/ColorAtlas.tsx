@@ -172,12 +172,6 @@ export function ColorAtlas({
   }
   return (
     <div className={"atlas " + (is3d ? "space" : "")}>
-      <div className="atlas-caption">
-        <span className="live-dot" />
-        {is3d
-          ? "A new perspective on color"
-          : "Every dot is a real paint color"}
-      </div>
       <canvas
         ref={canvas}
         aria-label={
@@ -294,7 +288,7 @@ export function ColorAtlas({
           </>
         ) : (
           <>
-            <MousePointer2 size={13} /> Hover to discover · click to explore
+            <MousePointer2 size={13} /> Hover for details · click to select
           </>
         )}
       </div>

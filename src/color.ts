@@ -78,8 +78,8 @@ export type Direction =
   | "clockwise"
   | "counterclockwise";
 export const directionLabels: Record<Direction, string> = {
-  lighter: "A little lighter",
-  darker: "A little darker",
+  lighter: "Lighter",
+  darker: "Darker",
   muted: "More muted",
   colorful: "More colorful",
   clockwise: "Hue clockwise",
@@ -153,7 +153,7 @@ export function explain(from: Coordinates, to: Coordinates): string {
     );
   if (Math.abs(dc) > 0.004)
     parts.push(
-      `${Math.abs(dc) < 0.02 ? "a little" : "noticeably"} ${dc > 0 ? "more colorful" : "more muted"}`,
+      `${Math.abs(dc) < 0.02 ? "slightly" : "noticeably"} ${dc > 0 ? "more colorful" : "more muted"}`,
     );
   const dh = hueDelta(from.h, to.h);
   if (Math.min(from.c, to.c) > 0.008 && Math.abs(dh) > 3) {

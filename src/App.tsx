@@ -6,15 +6,12 @@ import {
   ArrowUp,
   Check,
   ChevronRight,
-  CircleHelp,
   Copy,
   Grid2X2,
   Heart,
   Map,
   Moon,
-  Palette,
   Search,
-  Share2,
   SlidersHorizontal,
   Sun,
   X,
@@ -47,7 +44,6 @@ import {
 import { ColorAtlas } from "./ColorAtlas";
 import { NeighborExplorer } from "./NeighborExplorer";
 import { ComparisonExplorer } from "./ComparisonExplorer";
-import source from "../data/benjamin-moore/source.json";
 
 function storedPins(): string[] {
   try {
@@ -107,7 +103,6 @@ export function App() {
     from: Paint;
     direction: Direction;
   } | null>(null);
-  const [about, setAbout] = useState(false);
   const [visibleCount, setVisibleCount] = useState(80);
   const [queryDraft, setQueryDraft] = useState(state.query);
   const selected = byId.get(state.paint) ?? byId.get(defaults.paint)!;
@@ -186,7 +181,7 @@ export function App() {
       await navigator.clipboard.writeText(text);
       setNotice(label);
     } catch {
-      setNotice("Clipboard unavailable. Copy the URL from your address bar.");
+      setNotice("Clipboard unavailable.");
     }
   }
   const target = useMemo(() => inputColor(state.query), [state.query]);
@@ -327,12 +322,7 @@ export function App() {
           </span>
           undertone<span className="brand-period">.</span>
         </a>
-        <span className="header-note">A FIELD GUIDE TO PAINT COLOR</span>
         <div className="header-actions">
-          <button className="text-button" onClick={() => setAbout(true)}>
-            <CircleHelp size={16} />
-            <span>About the colors</span>
-          </button>
           <button
             className="icon-button"
             aria-label={`Theme: ${theme}. Switch to ${theme === "light" ? "dark" : theme === "dark" ? "system" : "light"}`}
@@ -349,27 +339,15 @@ export function App() {
           >
             {dark ? <Moon size={19} /> : <Sun size={19} />}
           </button>
-          <button
-            className="share-button"
-            onClick={() =>
-              copy(location.href, "Link copied. Your view is ready to share.")
-            }
-          >
-            <Share2 size={15} /> Share view
-          </button>
         </div>
       </header>
       <main>
         <section className="intro">
           <div>
-            <div className="eyebrow">
-              <span /> {paints.length.toLocaleString()} COLORS. ONE GOOD PLACE
-              TO START.
-            </div>
-            <h1>
-              A little closer to <em>your color.</em>
-            </h1>
-            <p>Find a shade you love. Then see where it takes you.</p>
+            <h1>Paint color explorer</h1>
+            <p>
+              Search, compare, and find similar Benjamin Moore paint colors.
+            </p>
           </div>
           <div className="intro-palette" aria-hidden="true">
             {["#ddd9ca", "#bac0a7", "#8e9c85", "#627b65", "#354f43"].map(
@@ -389,11 +367,10 @@ export function App() {
           <section className="explorer" aria-label="Color catalog">
             <div className="explorer-top">
               <div className="section-heading">
-                <span className="tiny-label">THE COLOR LIBRARY</span>
                 <h2>
                   {state.mode === "compare"
-                    ? "Compare & discover"
-                    : "Find your starting point"}
+                    ? "Compare colors"
+                    : "Color catalog"}
                 </h2>
               </div>
               <span className="brand-badge">
@@ -566,11 +543,6 @@ export function App() {
                 )}
                 {state.view !== "grid" && results.length > 0 && (
                   <div className="map-footer">
-                    <span>
-                      {target
-                        ? "CLOSEST PAINT MATCHES"
-                        : "A FEW PLACES TO BEGIN"}
-                    </span>
                     <div className="mini-picks">
                       {(target
                         ? results.slice(0, 6)
@@ -609,7 +581,6 @@ export function App() {
                 className="hero-swatch"
                 style={{ background: selected.hex, color: ink(selected) }}
               >
-                <span className="swatch-label">BENJAMIN MOORE</span>
                 <button
                   className="swatch-copy"
                   onClick={() => copy(selected.hex)}
@@ -623,11 +594,6 @@ export function App() {
             <div className="detail-content">
               <div className="detail-title">
                 <div>
-                  <span className="tiny-label">
-                    {state.mode === "compare"
-                      ? "INSPECTING"
-                      : "YOUR STARTING COLOR"}
-                  </span>
                   <h2>{selected.name}</h2>
                 </div>
                 <button
@@ -668,14 +634,13 @@ export function App() {
               </button>
               <div className="section-rule" />
               <div className="direction-heading">
-                <h3>This color, but…</h3>
+                <h3>Find similar colors</h3>
                 {history.length > 0 && (
                   <button onClick={undo} className="text-button">
                     <Undo2 size={13} /> Back
                   </button>
                 )}
               </div>
-              <p className="muted small">One small step. Another real paint.</p>
               <div className="direction-grid">
                 {(Object.keys(directionLabels) as Direction[]).map((d) => {
                   const Icon = icons[d],
@@ -745,7 +710,7 @@ export function App() {
           <section className="saved-tray">
             <div>
               <Heart size={16} />
-              <strong>Your shortlist</strong>
+              <strong>Saved colors</strong>
               <span>
                 {pins.length}/{MAX_PALETTE_SIZE}
               </span>
@@ -779,12 +744,9 @@ export function App() {
         <footer>
           <span className="footer-brand">undertone.</span>
           <p>
-            Digital colors are a starting point. Always sample paint in your
-            space.
+            Screen colors may differ from paint. Check physical samples before
+            choosing.
           </p>
-          <button className="text-button" onClick={() => setAbout(true)}>
-            Color science & sources <ChevronRight size={13} />
-          </button>
         </footer>
       </main>
       <div className="toast" role="status" aria-live="polite">
@@ -795,11 +757,6 @@ export function App() {
           </span>
         )}
       </div>
-      {about && (
-        <div className="modal-backdrop" onClick={() => setAbout(false)}>
-          <About onClose={() => setAbout(false)} />
-        </div>
-      )}
     </>
   );
 }
@@ -827,109 +784,5 @@ function Surround({
         ))}
       </div>
     </div>
-  );
-}
-function About({ onClose }: { onClose: () => void }) {
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    const dialog = document.querySelector<HTMLDialogElement>("dialog")!;
-    dialog.showModal();
-    return () => {
-      dialog.close();
-      previous?.focus();
-    };
-  }, []);
-  return (
-    <dialog
-      className="about-modal"
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        className="modal-close icon-button"
-        aria-label="Close about"
-        onClick={onClose}
-      >
-        <X size={21} />
-      </button>
-      <Palette size={30} />
-      <div className="eyebrow">A FIELD GUIDE, NOT A FORMULA</div>
-      <h2>
-        Good color starts
-        <br />
-        with a little curiosity.
-      </h2>
-      <p>
-        Undertone is an independent explorer for{" "}
-        {paints.length.toLocaleString()} Benjamin Moore colors. The catalog is
-        bundled with the app: searches and matching happen entirely in your
-        browser.
-      </p>
-      <h3>How the colors work</h3>
-      <p>
-        Culori converts manufacturer sRGB values to OKLab and OKLCH. Nearest
-        matches use Euclidean distance in OKLab. Direction buttons look for a
-        small change in one property while limiting changes in the others.
-        Sometimes there is no suitable next step.
-      </p>
-      <p>
-        Hue steps are disabled near gray, where hue has little perceptual
-        meaning. Color-family labels are approximate, computed groupings.
-        Compare finds catalog paints inside or near the volume spanned by your
-        selected colors. With two colors this becomes their connecting segment.
-        It does not simulate pigment mixing.
-      </p>
-      <h3>What the numbers mean</h3>
-      <p>
-        LRV is the manufacturer’s light reflectance value. It is separate from
-        OKLCH lightness. Match explanations describe the published digital
-        swatches, not measured performance on your wall.
-      </p>
-      <h3>Sources & your privacy</h3>
-      <p>
-        The manufacturer catalog was retrieved{" "}
-        {new Date(source.retrievedAt).toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-          timeZone: "America/Chicago",
-        })}{" "}
-        (US Central). Catalog updates are explicit, versioned snapshots. Saved
-        colors and theme preferences live on this device; shared URLs include
-        your selected colors and filters. No account or backend is needed.
-      </p>
-      <p>
-        <a
-          href="https://www.benjaminmoore.com/en-us/paint-colors"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Benjamin Moore catalog ↗
-        </a>{" "}
-        ·{" "}
-        <a href="https://culorijs.org/" target="_blank" rel="noreferrer">
-          Culori ↗
-        </a>{" "}
-        ·{" "}
-        <a
-          href="https://bottosson.github.io/posts/oklab/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          About OKLab ↗
-        </a>
-      </p>
-      <p className="muted small">
-        Not affiliated with Benjamin Moore. Color names and trademarks belong to
-        their respective owners. Screens, lighting, surfaces, and sheen affect
-        appearance. Test physical samples before choosing paint.
-      </p>
-      <button className="primary-button" onClick={onClose}>
-        Back to exploring <ArrowRight size={16} />
-      </button>
-    </dialog>
   );
 }

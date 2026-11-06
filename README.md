@@ -1,6 +1,6 @@
 # Undertone
 
-A static paint exploration workbench built with TypeScript, React, Effect, and Culori. Explore 4,068 Benjamin Moore colors and move between actual paints with “a little lighter,” “more muted,” and hue-step buttons.
+A static paint exploration workbench built with TypeScript, React, Effect, and Culori. Explore 4,068 Benjamin Moore colors and move between actual paints with “Lighter,” “More muted,” and hue-step buttons.
 
 ## Run
 

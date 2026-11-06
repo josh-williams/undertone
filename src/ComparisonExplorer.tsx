@@ -166,11 +166,10 @@ export function ComparisonExplorer({
     <div className="comparison comparison-explorer">
       <div className="list-title">
         <div>
-          <span className="tiny-label">YOUR COLORS, IN CONTEXT</span>
           <h3>
             {state.compareView === "swatches"
-              ? "Your colors, side by side"
-              : "Your colors, in color space"}
+              ? "Color swatches"
+              : "Selected colors"}
           </h3>
         </div>
         <button
@@ -254,11 +253,8 @@ export function ComparisonExplorer({
       {!pins.length ? (
         <div className="empty-state">
           <Box size={30} />
-          <h3>Give your colors some space.</h3>
-          <p>
-            Add two or more paints to compare their positions and discover
-            colors between them.
-          </p>
+          <h3>No colors selected</h3>
+          <p>Add paint colors to compare them and find similar colors.</p>
           <button onClick={() => onPin(inspected)}>Add {inspected.name}</button>
         </div>
       ) : (
@@ -721,8 +717,8 @@ export function ComparisonExplorer({
                   <div className="list-title">
                     <h3>
                       {pins.length === 2
-                        ? "Between & around these colors"
-                        : "In this color neighborhood"}
+                        ? "Colors between and nearby"
+                        : "Nearby catalog colors"}
                     </h3>
                     <span className="muted small">
                       {candidates.length} swatches

@@ -145,13 +145,6 @@ main {
   transform: rotate(80deg);
   background: #425c42;
 }
-.header-note {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 1.7px;
-  color: var(--muted);
-  margin-top: 6px;
-}
 .header-actions {
   margin-left: auto;
   display: flex;
@@ -174,39 +167,12 @@ main {
   justify-content: center;
   border-radius: 6px;
 }
-.share-button {
-  background: var(--accent);
-  color: var(--panel);
-  padding: 11px 16px;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
 .intro {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 220px;
-  padding: 40px 0 43px;
-}
-.eyebrow {
-  font-size: 9px;
-  letter-spacing: 1.8px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  margin-bottom: 15px;
-}
-.eyebrow > span {
-  width: 6px;
-  height: 6px;
-  background: #84986a;
-  border-radius: 50%;
+  min-height: 160px;
+  padding: 30px 0;
 }
 h1 {
   font-size: clamp(30px, 3.3vw, 48px);
@@ -257,12 +223,6 @@ h1 em {
   justify-content: space-between;
   align-items: center;
   padding: 25px 25px 20px;
-}
-.tiny-label {
-  font-size: 8px;
-  letter-spacing: 1.6px;
-  font-weight: 700;
-  color: var(--muted);
 }
 .section-heading h2 {
   font-size: 19px;
@@ -413,23 +373,6 @@ h1 em {
 .atlas.space canvas:active {
   cursor: grabbing;
 }
-.atlas-caption {
-  position: absolute;
-  top: 13px;
-  left: 17px;
-  font-size: 9px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  pointer-events: none;
-}
-.live-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #9cac8c;
-}
 .atlas-help {
   display: flex;
   align-items: center;
@@ -482,17 +425,11 @@ h1 em {
 .map-footer {
   padding: 22px 25px;
 }
-.map-footer > span {
-  font-size: 8px;
-  letter-spacing: 1.4px;
-  color: var(--muted);
-  font-weight: 600;
-}
 .mini-picks {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 9px;
-  margin-top: 12px;
+  margin-top: 0;
 }
 .mini-picks button {
   text-align: left;
@@ -535,12 +472,6 @@ h1 em {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-}
-.swatch-label {
-  font-size: 7px;
-  letter-spacing: 2px;
-  opacity: 0.6;
-  font-weight: 600;
 }
 .swatch-code {
   font-size: 12px;
@@ -1103,52 +1034,6 @@ footer > .text-button {
   align-items: center;
   gap: 10px;
 }
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  background: #0005;
-}
-.about-modal {
-  background: var(--panel);
-  color: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  width: min(560px, 92vw);
-  max-height: 85vh;
-  padding: 40px;
-  box-shadow: 0 20px 80px #0003;
-}
-.about-modal::backdrop {
-  background: #151b18aa;
-  backdrop-filter: blur(4px);
-}
-.modal-close {
-  position: absolute;
-  right: 15px;
-  top: 15px;
-}
-.about-modal > .eyebrow {
-  margin: 20px 0 12px;
-  font-size: 8px;
-}
-.about-modal h2 {
-  font-size: 31px;
-  font-weight: 500;
-  letter-spacing: -1.2px;
-  margin-bottom: 20px;
-  line-height: 1.2;
-}
-.about-modal p {
-  font-size: 12px;
-  line-height: 1.85;
-  margin-bottom: 17px;
-  color: var(--muted);
-}
-.about-modal h3 {
-  font-size: 13px;
-  margin: 20px 0 8px;
-}
 .skip-link {
   position: fixed;
   top: -100px;
@@ -1218,9 +1103,6 @@ footer > .text-button {
   .workspace {
     grid-template-columns: minmax(0, 1fr) 300px;
     gap: 18px;
-  }
-  .header-note {
-    display: none;
   }
   .detail-content {
     padding: 20px 17px;
@@ -1292,13 +1174,6 @@ footer > .text-button {
   .header-actions {
     gap: 10px;
   }
-  .header-actions .text-button span {
-    display: none;
-  }
-  .share-button {
-    padding: 9px 11px;
-    font-size: 11px;
-  }
   .intro {
     min-height: 190px;
     padding: 32px 0;
@@ -1307,10 +1182,6 @@ footer > .text-button {
     font-size: 34px;
     letter-spacing: -1.5px;
     max-width: 420px;
-  }
-  .intro .eyebrow {
-    font-size: 8px;
-    letter-spacing: 1.1px;
   }
   .intro-palette {
     display: none;
@@ -1386,9 +1257,6 @@ footer > .text-button {
   .header-actions > .text-button {
     padding: 8px;
   }
-  .about-modal {
-    padding: 30px;
-  }
 }
 @media (max-width: 480px) {
   main {
@@ -1462,9 +1330,6 @@ footer > .text-button {
   }
   .atlas canvas {
     height: 370px;
-  }
-  .atlas-caption {
-    font-size: 8px;
   }
   .map-footer {
     padding: 19px 15px;
@@ -1553,9 +1418,6 @@ footer > .text-button {
   footer p {
     line-height: 1.8;
     max-width: 230px;
-  }
-  .about-modal h2 {
-    font-size: 27px;
   }
   .atlas-help label {
     margin-left: 3px;
