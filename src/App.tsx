@@ -322,6 +322,9 @@ export function App() {
           </span>
           undertone<span className="brand-period">.</span>
         </a>
+        <p className="header-description">
+          Search, compare, and find similar Benjamin Moore paint colors.
+        </p>
         <div className="header-actions">
           <button
             className="icon-button"
@@ -342,36 +345,15 @@ export function App() {
         </div>
       </header>
       <main>
-        <section className="intro">
-          <div>
-            <h1>Paint color explorer</h1>
-            <p>
-              Search, compare, and find similar Benjamin Moore paint colors.
-            </p>
-          </div>
-          <div className="intro-palette" aria-hidden="true">
-            {["#ddd9ca", "#bac0a7", "#8e9c85", "#627b65", "#354f43"].map(
-              (c, i) => (
-                <i
-                  key={c}
-                  style={{
-                    background: c,
-                    transform: `rotate(${(i - 2) * 7}deg) translateY(${Math.abs(i - 2) * 4}px)`,
-                  }}
-                />
-              ),
-            )}
-          </div>
-        </section>
         <div className="workspace" id="workspace" tabIndex={-1}>
           <section className="explorer" aria-label="Color catalog">
             <div className="explorer-top">
               <div className="section-heading">
-                <h2>
+                <h1>
                   {state.mode === "compare"
                     ? "Compare colors"
                     : "Color catalog"}
-                </h2>
+                </h1>
               </div>
               <span className="brand-badge">
                 Benjamin Moore <span>↗</span>

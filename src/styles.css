@@ -100,12 +100,17 @@ main {
   margin: auto;
 }
 .site-header {
-  height: 88px;
+  height: 72px;
   padding: 0 64px;
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 24px;
+}
+.header-description {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 .wordmark {
   text-decoration: none;
@@ -167,13 +172,6 @@ main {
   justify-content: center;
   border-radius: 6px;
 }
-.intro {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 160px;
-  padding: 30px 0;
-}
 h1 {
   font-size: clamp(30px, 3.3vw, 48px);
   letter-spacing: -2px;
@@ -184,26 +182,8 @@ h1 em {
   font-style: normal;
   color: #7e8b69;
 }
-.intro p {
-  font-size: 14px;
-  color: var(--muted);
-  margin-top: 15px;
-}
-.intro-palette {
-  display: flex;
-  padding-right: 28px;
-  align-items: center;
-}
-.intro-palette i {
-  display: block;
-  width: 46px;
-  height: 84px;
-  border: 3px solid var(--page);
-  border-radius: 6px;
-  margin-left: -9px;
-  box-shadow: 0 5px 8px #00000006;
-}
 .workspace {
+  margin-top: 24px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 326px;
   gap: 24px;
@@ -224,7 +204,7 @@ h1 em {
   align-items: center;
   padding: 25px 25px 20px;
 }
-.section-heading h2 {
+.section-heading h1 {
   font-size: 19px;
   letter-spacing: -0.6px;
   font-weight: 650;
@@ -1139,13 +1119,6 @@ footer > .text-button {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 22px 14px;
   }
-  .intro-palette {
-    padding-right: 0;
-  }
-  .intro-palette i {
-    width: 37px;
-    height: 72px;
-  }
   .atlas canvas {
     height: 430px;
   }
@@ -1173,18 +1146,6 @@ footer > .text-button {
   }
   .header-actions {
     gap: 10px;
-  }
-  .intro {
-    min-height: 190px;
-    padding: 32px 0;
-  }
-  .intro h1 {
-    font-size: 34px;
-    letter-spacing: -1.5px;
-    max-width: 420px;
-  }
-  .intro-palette {
-    display: none;
   }
   .workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -1271,18 +1232,7 @@ footer > .text-button {
   .header-actions > .text-button {
     display: none;
   }
-  .intro h1 {
-    font-size: 31px;
-    max-width: 330px;
-  }
-  .intro p {
-    font-size: 12px;
-  }
-  .intro {
-    padding: 27px 0;
-    min-height: 172px;
-  }
-  .section-heading h2 {
+  .section-heading h1 {
     font-size: 17px;
   }
   .brand-badge {
@@ -2245,5 +2195,37 @@ footer > .text-button {
   .comparison-space-key {
     font-size: 8px;
     gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    height: auto;
+    padding: 12px 22px;
+    gap: 5px 12px;
+  }
+  .site-header .wordmark {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .header-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .header-description {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 11px;
+  }
+  .workspace {
+    margin-top: 16px;
+  }
+}
+@media (max-width: 480px) {
+  .site-header {
+    padding-left: 14px;
+    padding-right: 14px;
   }
 }
