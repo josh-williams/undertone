@@ -44,6 +44,8 @@ import {
 import { ColorAtlas } from "./ColorAtlas";
 import { NeighborExplorer } from "./NeighborExplorer";
 import { ComparisonExplorer } from "./ComparisonExplorer";
+import { CollectionFilter } from "./CollectionFilter";
+import { filterCollections } from "./collections";
 
 function storedPins(): string[] {
   try {
@@ -161,7 +163,14 @@ export function App() {
   }, [notice]);
   useEffect(() => {
     setVisibleCount(80);
-  }, [state.query, state.family, state.lightness, state.mode, state.tolerance]);
+  }, [
+    state.query,
+    state.family,
+    state.lightness,
+    state.mode,
+    state.tolerance,
+    state.collections,
+  ]);
   function select(p: Paint) {
     if (p.id === selected.id) return;
     setHistory((h) => [...h.slice(-19), selected.id]);
@@ -185,13 +194,21 @@ export function App() {
     }
   }
   const target = useMemo(() => inputColor(state.query), [state.query]);
+  const catalog = useMemo(
+    () => filterCollections(paints, state.collections),
+    [state.collections],
+  );
+  const similarCatalog = useMemo(
+    () => filterCollections(paints, state.nearCollections),
+    [state.nearCollections],
+  );
   const invalidColor =
     !!state.query &&
     !target &&
     /^(#|(?:oklch|oklab|rgb|hsl|color|lab|lch)\()/i.test(state.query.trim());
   const filtered = useMemo(
     () =>
-      paints.filter(
+      catalog.filter(
         (p) =>
           inFamily(p, state.family) &&
           (state.lightness === "all" ||
@@ -206,7 +223,7 @@ export function App() {
               .toLowerCase()
               .includes(state.query.toLowerCase())),
       ),
-    [state.family, state.lightness, state.query, target],
+    [catalog, state.family, state.lightness, state.query, target],
   );
   const results = useMemo(
     () =>
@@ -219,20 +236,20 @@ export function App() {
     () =>
       nearest(
         selected,
-        paints.filter((p) => p.id !== selected.id),
+        similarCatalog.filter((p) => p.id !== selected.id),
         Number(state.nearCount),
       ),
-    [selected, state.nearCount],
+    [selected, state.nearCount, similarCatalog],
   );
   const steps = useMemo(
     () =>
       Object.fromEntries(
         (Object.keys(directionLabels) as Direction[]).map((d) => [
           d,
-          directional(selected, d),
+          directional(selected, d, similarCatalog),
         ]),
       ) as Record<Direction, Paint[]>,
-    [selected],
+    [selected, similarCatalog],
   );
   function takeStep(direction: Direction) {
     const p = steps[direction][0];
@@ -462,6 +479,11 @@ export function App() {
                     {results.length.toLocaleString()}{" "}
                     {target ? "closest matches" : "colors"}
                   </span>
+                  <CollectionFilter
+                    label="Catalog collections"
+                    value={state.collections}
+                    onChange={(collections) => update({ collections })}
+                  />
                 </div>
                 {target && (
                   <div className="match-banner">
@@ -508,6 +530,7 @@ export function App() {
                             query: "",
                             family: "All colors",
                             lightness: "all",
+                            collections: defaults.collections,
                           });
                         }}
                       >
@@ -526,7 +549,8 @@ export function App() {
                 {state.view !== "grid" && results.length > 0 && (
                   <div className="map-footer">
                     <div className="mini-picks">
-                      {(target
+                      {(target ||
+                      state.collections.length !== defaults.collections.length
                         ? results.slice(0, 6)
                         : featured.map((id) => byId.get(id)!)
                       ).map((p) => (
@@ -682,6 +706,7 @@ export function App() {
           view={state.nearView}
           count={state.nearCount}
           plane={state.nearPlane}
+          collections={state.nearCollections}
           onChange={update}
           onSelect={select}
           swatches={

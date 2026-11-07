@@ -1,4 +1,7 @@
 import { Context, Effect, Layer, Schema } from "effect";
+import { collectionIds, decodeCollections } from "./collections";
+
+const CollectionsSchema = Schema.Array(Schema.Literal(...collectionIds));
 
 export const ViewSchema = Schema.Struct({
   paint: Schema.String,
@@ -7,6 +10,9 @@ export const ViewSchema = Schema.Struct({
   nearCount: Schema.Literal("12", "24", "48"),
   nearPlane: Schema.Literal("la", "lb", "ab"),
   family: Schema.String,
+  collections: CollectionsSchema,
+  nearCollections: CollectionsSchema,
+  compareCollections: CollectionsSchema,
   query: Schema.String,
   mode: Schema.Literal("explore", "compare"),
   compareView: Schema.Literal("3d", "2d", "swatches"),
@@ -25,6 +31,9 @@ export const defaults: ViewState = {
   nearCount: "24",
   nearPlane: "la",
   family: "All colors",
+  collections: [...collectionIds],
+  nearCollections: [...collectionIds],
+  compareCollections: [...collectionIds],
   query: "",
   mode: "explore",
   compareView: "3d",
@@ -51,6 +60,9 @@ export function decodeLocation(hash: string): ViewState {
       ...defaults,
       ...Object.fromEntries(q),
       pins: q.get("pins")?.split(",").filter(Boolean) ?? [],
+      collections: decodeCollections(q.get("collections")),
+      nearCollections: decodeCollections(q.get("nearCollections")),
+      compareCollections: decodeCollections(q.get("compareCollections")),
       tolerance: q.has("tolerance")
         ? Number(q.get("tolerance"))
         : defaults.tolerance,
@@ -64,7 +76,15 @@ export const MAX_PALETTE_SIZE = 24;
 export function encodeLocation(state: ViewState) {
   const params = new URLSearchParams();
   Object.entries(state).forEach(([k, v]) => {
-    if (k === "pins") {
+    if (
+      k === "collections" ||
+      k === "nearCollections" ||
+      k === "compareCollections"
+    ) {
+      const included = v as string[];
+      if (!collectionIds.every((id) => included.includes(id)))
+        params.set(k, included.join(","));
+    } else if (k === "pins") {
       if ((v as string[]).length) params.set(k, (v as string[]).join(","));
     } else if (v !== defaults[k as keyof ViewState]) params.set(k, String(v));
   });

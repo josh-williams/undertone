@@ -22,6 +22,8 @@ import {
   selectionHull,
 } from "./selection-region";
 import { MAX_PALETTE_SIZE, type ViewState } from "./state";
+import { CollectionFilter } from "./CollectionFilter";
+import { filterCollections } from "./collections";
 
 type Props = {
   pins: Paint[];
@@ -62,7 +64,7 @@ export function ComparisonExplorer({
   }, [frameKey]);
   useEffect(() => {
     setLimit(24);
-  }, [state.tolerance]);
+  }, [state.tolerance, state.compareCollections]);
   useEffect(() => {
     const el = plot.current;
     if (!el) return;
@@ -77,8 +79,14 @@ export function ComparisonExplorer({
   const nearby = state.compareNearby === "on";
   const candidates = useMemo(
     () =>
-      nearby ? paintsInSelectionRegion(pins, paints, state.tolerance) : [],
-    [frameKey, nearby, state.tolerance],
+      nearby
+        ? paintsInSelectionRegion(
+            pins,
+            filterCollections(paints, state.compareCollections),
+            state.tolerance,
+          )
+        : [],
+    [frameKey, nearby, state.tolerance, state.compareCollections],
   );
   const selectedIds = new Set(pins.map((p) => p.id));
   const suggestions = query.trim()
@@ -315,6 +323,15 @@ export function ComparisonExplorer({
                   />
                   <span>Show nearby catalog colors</span>
                 </label>
+                {nearby && (
+                  <CollectionFilter
+                    label="Nearby colors collections"
+                    value={state.compareCollections}
+                    onChange={(compareCollections) =>
+                      onChange({ compareCollections })
+                    }
+                  />
+                )}
                 {state.compareView === "2d" && (
                   <select
                     aria-label="Comparison projection"
@@ -774,8 +791,9 @@ export function ComparisonExplorer({
                     </>
                   ) : (
                     <p className="muted small">
-                      No other swatches in this area. Try broadening the search
-                      area.
+                      No other swatches in this area and the selected
+                      collections. Try broadening the search area or including
+                      more collections.
                     </p>
                   )}
                 </div>

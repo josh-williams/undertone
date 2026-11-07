@@ -17,7 +17,8 @@ import {
   type Vector,
   type Plane,
 } from "./neighborhood";
-import type { ViewState } from "./state";
+import { defaults, type ViewState } from "./state";
+import { CollectionFilter } from "./CollectionFilter";
 
 type Props = {
   selected: Paint;
@@ -25,6 +26,7 @@ type Props = {
   view: ViewState["nearView"];
   count: ViewState["nearCount"];
   plane: Plane;
+  collections: ViewState["nearCollections"];
   onChange: (patch: Partial<ViewState>) => void;
   onSelect: (paint: Paint) => void;
   swatches: React.ReactNode;
@@ -41,6 +43,7 @@ export function NeighborExplorer({
   view,
   count,
   plane,
+  collections,
   onChange,
   onSelect,
   swatches,
@@ -67,7 +70,7 @@ export function NeighborExplorer({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [view]);
+  }, [view, neighbors.length === 0]);
   const height = width < 500 ? 360 : 440;
   const radius = useMemo(
     () => neighborhoodRadius(selected, neighbors),
@@ -177,6 +180,11 @@ export function NeighborExplorer({
       </div>
       <div className="neighborhood-shell">
         <div className="neighborhood-toolbar">
+          <CollectionFilter
+            label="Similar colors collections"
+            value={collections}
+            onChange={(nearCollections) => onChange({ nearCollections })}
+          />
           <label>
             Results{" "}
             <select
@@ -214,7 +222,20 @@ export function NeighborExplorer({
                 : `OKLab · ${planeLabels[plane]}`}
           </span>
         </div>
-        {view === "swatches" ? (
+        {neighbors.length === 0 ? (
+          <div className="empty-state compact">
+            <p>No similar colors in the selected collections.</p>
+            <button
+              type="button"
+              className="text-button"
+              onClick={() =>
+                onChange({ nearCollections: defaults.nearCollections })
+              }
+            >
+              Include all collections
+            </button>
+          </div>
+        ) : view === "swatches" ? (
           <div className="neighbor-swatches">{swatches}</div>
         ) : (
           <div className="neighborhood-layout">

@@ -308,6 +308,7 @@ h1 em {
 }
 .filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 9px;
   align-items: center;
   padding: 15px 25px;
@@ -1407,6 +1408,7 @@ footer > .text-button {
 }
 .neighborhood-toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
   align-items: center;
   padding: 15px 21px;
@@ -1871,6 +1873,7 @@ footer > .text-button {
 }
 .comparison-space-controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -2254,4 +2257,125 @@ footer > .text-button {
 }
 .atlas.space .atlas-help input {
   width: 105px;
+}
+
+/* Collection checkboxes share one control across catalog and discovery views. */
+.explorer,
+.neighborhood-shell {
+  overflow: visible;
+}
+.neighborhood-toolbar {
+  border-radius: 11px 11px 0 0;
+}
+.collection-filter {
+  position: relative;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--ink);
+}
+.collection-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel);
+  padding: 7px 9px;
+  font-size: 11px;
+}
+.collection-trigger.filtered {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.collection-options {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 7px);
+  right: 0;
+  width: 310px;
+  max-width: calc(100vw - 48px);
+  max-height: min(560px, 70vh);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--panel);
+  box-shadow: 0 8px 28px #0002;
+}
+.neighborhood-toolbar .collection-options {
+  left: 0;
+  right: auto;
+}
+.collection-options-heading,
+.collection-actions,
+.collection-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.collection-options-heading strong {
+  font-size: 12px;
+}
+.collection-actions {
+  justify-content: flex-start;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+.collection-actions button,
+.collection-only {
+  color: var(--accent);
+  font-size: 11px;
+  padding: 5px;
+  border-radius: 4px;
+}
+.collection-actions button:hover,
+.collection-only:hover {
+  background: var(--accent-soft);
+}
+.collection-options fieldset {
+  border: 0;
+  padding: 5px 0 0;
+  margin: 0;
+  min-width: 0;
+}
+.collection-options .collection-option label {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 9px;
+  padding: 7px 0;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+}
+.collection-option input {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.collection-option small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 3px;
+}
+.collection-options legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .filters .collection-filter {
+    order: 1;
+  }
+  .filters .collection-options {
+    left: 0;
+    right: auto;
+  }
 }

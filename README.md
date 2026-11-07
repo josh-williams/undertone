@@ -22,6 +22,7 @@ Deploy the generated `dist/` directory to any static host. Hash-based URLs suppo
 ## Features
 
 - Search names, paint codes, previous names, or opaque CSS colors (hex, RGB, HSL, OKLCH, and other formats supported by Culori).
+- Independent multi-select collection filters for the catalog, similar colors (including directional steps), and Compare's nearby colors. Choose any combination, use Only for a single collection, or Select all. Filters apply to maps, spatial views, swatches, and ranked results and are preserved in shareable URLs. Selected comparison paints remain visible regardless of the nearby filter.
 - Hue/lightness map, searchable swatch catalog, and a draggable, zoomable 3D OKLab cloud. Explore 3D supports 0.65×–32× zoom, panning (Pan mode or Shift-drag), and focusing on the selected paint. The zoom slider uses a logarithmic scale for fine control. The swatch view provides a keyboard-accessible alternative to the canvas.
 - Directional steps to real catalog paints, previews of each next step, explanations, exploration undo, and browser history.
 - Unified Compare with 3D, 2D, and side-by-side swatch views. Selected paints have prominent numbered markers. Optional nearby catalog colors cover the volume inside the selection and an adjustable surrounding margin; two selected paints recover the between-two workflow. Inspecting candidates preserves the palette and camera frame. Add alternatives directly or search by name/code. Legacy between URLs migrate to Compare with their endpoints preserved.
@@ -38,6 +39,8 @@ Directional searches target a small lightness/chroma/hue change, restrict unrela
 The map puts near-achromatic paints on a neutral rail and plots other colors by OKLCH hue and lightness. The 3D cloud uses Cartesian OKLab coordinates with a vertical lightness axis; rotation and perspective preserve the underlying positions. All points use unlit sRGB paint colors. Dense/identical points may overlap; the swatch catalog exposes each record individually. Color-family filters are approximate computed hue/chroma groups, not manufacturer classifications.
 
 LRV comes directly from the manufacturer and is distinct from OKLCH lightness. Entered out-of-sRGB colors are matched in their original coordinates; their screen preview is clipped to sRGB. Transparent colors are rejected because paint matching needs an opaque target.
+
+Collection filters follow each catalog record's code: Benjamin Moore Classics (001–1680), Color Preview (2000-10–2175-70), Designer Classics (CC), Historical (HC), Affinity (AF), Off White (OC), Color Stories (CSP), and Williamsburg (CW). PM and ES records have separate code-group options without assigning unverified collection names. These follow the manufacturer's [collection listings](https://www.benjaminmoore.com/en-us/paint-colors/color-collections) and [Designer Classics numbering](https://www.benjaminmoore.com/en-us/paint-colors/designer-classics). Aliases under different collection codes remain separate records; a collection filter includes the version with the matching code. Nearby discovery filters before deduplicating digital swatches, so an excluded collection's alias cannot hide an included one. Collection groups are derived locally, so catalog refreshes retain filtering without additional API calls.
 
 ## Update the catalog
 
