@@ -2229,3 +2229,29 @@ footer > .text-button {
     padding-right: 14px;
   }
 }
+
+.atlas.space .atlas-help {
+  flex-wrap: wrap;
+}
+.atlas-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 10px;
+}
+.atlas-control.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.atlas-help output {
+  min-width: 31px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.atlas.space .atlas-help input {
+  width: 105px;
+}

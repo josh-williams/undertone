@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, Move, MousePointer2 } from "lucide-react";
+import { RotateCcw, Move, MousePointer2, Crosshair } from "lucide-react";
 import { type Paint } from "./color";
+import {
+  DEFAULT_ATLAS_CAMERA,
+  atlasZoomFromSlider,
+  atlasZoomToSlider,
+  focusAtlasColor,
+  projectAtlasColor,
+  zoomAtlas,
+} from "./atlas-camera";
 
 type Point = { paint: Paint; x: number; y: number; z: number; r: number };
 export function ColorAtlas({
@@ -20,14 +28,16 @@ export function ColorAtlas({
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [size, setSize] = useState({ w: 800, h: 470 });
-  const [rotation, setRotation] = useState({
-    yaw: -0.55,
-    pitch: 0.16,
-    zoom: 1,
-  });
+  const [rotation, setRotation] = useState(DEFAULT_ATLAS_CAMERA);
+  const [panMode, setPanMode] = useState(false);
   const [hover, setHover] = useState<Point | null>(null);
   const points = useRef<Point[]>([]);
-  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const drag = useRef<{
+    x: number;
+    y: number;
+    moved: boolean;
+    pan: boolean;
+  } | null>(null);
   useEffect(() => {
     const el = canvas.current!;
     const observer = new ResizeObserver(([e]) =>
@@ -58,21 +68,11 @@ export function ColorAtlas({
           z: 0,
           r: p.c < 0.018 ? 4.1 : 3.6,
         };
-      const x = p.a * 2.8,
-        y = (p.l - 0.57) * 1.8,
-        z = p.b * 2.8;
-      const rx = x * Math.cos(rotation.yaw) + z * Math.sin(rotation.yaw),
-        rz = -x * Math.sin(rotation.yaw) + z * Math.cos(rotation.yaw);
-      const ry = y * Math.cos(rotation.pitch) - rz * Math.sin(rotation.pitch),
-        depth = y * Math.sin(rotation.pitch) + rz * Math.cos(rotation.pitch);
-      const scale =
-        (Math.min(w * 0.95, h * 0.93) * rotation.zoom) / (1.8 - depth * 0.35);
+      const point = projectAtlasColor(p, rotation, size);
       return {
         paint: p,
-        x: w / 2 + rx * scale,
-        y: h / 2 - ry * scale,
-        z: depth,
-        r: 3.2 + depth * 0.9,
+        ...point,
+        r: 3.2 + point.z * 0.9,
       };
     }
     ctx.font = "10px system-ui";
@@ -95,10 +95,13 @@ export function ColorAtlas({
       ctx.fillText("LIGHTNESS", 0, 0);
       ctx.restore();
     } else {
+      const axisX = w / 2 + rotation.panX;
+      const axisTop = h / 2 + rotation.panY - h * 0.35 * rotation.zoom;
+      const axisBottom = h / 2 + rotation.panY + h * 0.3 * rotation.zoom;
       ctx.beginPath();
       ctx.ellipse(
-        w / 2,
-        h * 0.76,
+        w / 2 + rotation.panX,
+        h / 2 + rotation.panY + h * 0.26 * rotation.zoom,
         w * 0.27 * rotation.zoom,
         h * 0.065 * rotation.zoom,
         0,
@@ -108,12 +111,12 @@ export function ColorAtlas({
       ctx.stroke();
       ctx.setLineDash([3, 5]);
       ctx.beginPath();
-      ctx.moveTo(w / 2, h * 0.15);
-      ctx.lineTo(w / 2, h * 0.8);
+      ctx.moveTo(axisX, axisTop);
+      ctx.lineTo(axisX, axisBottom);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillText("LIGHTER", w / 2 + 10, h * 0.14);
-      ctx.fillText("DARKER", w / 2 + 10, h * 0.85);
+      ctx.fillText("LIGHTER", axisX + 10, axisTop - 5);
+      ctx.fillText("DARKER", axisX + 10, axisBottom + 20);
     }
     const all = paints.map(project).sort((a, b) => a.z - b.z);
     points.current = all;
@@ -211,7 +214,12 @@ export function ColorAtlas({
           }
         }}
         onPointerDown={(e) => {
-          drag.current = { x: e.clientX, y: e.clientY, moved: false };
+          drag.current = {
+            x: e.clientX,
+            y: e.clientY,
+            moved: false,
+            pan: panMode || e.shiftKey,
+          };
           e.currentTarget.setPointerCapture(e.pointerId);
         }}
         onPointerMove={(e) => {
@@ -221,11 +229,16 @@ export function ColorAtlas({
               dy = e.clientY - drag.current.y;
             if (Math.abs(dx) + Math.abs(dy) > 2) {
               drag.current.moved = true;
-              setRotation((r) => ({
-                ...r,
-                yaw: r.yaw + dx * 0.008,
-                pitch: Math.max(-1, Math.min(1, r.pitch + dy * 0.006)),
-              }));
+              const pan = drag.current.pan;
+              setRotation((r) =>
+                pan
+                  ? { ...r, panX: r.panX + dx, panY: r.panY + dy }
+                  : {
+                      ...r,
+                      yaw: r.yaw + dx * 0.008,
+                      pitch: Math.max(-1, Math.min(1, r.pitch + dy * 0.006)),
+                    },
+              );
               drag.current.x = e.clientX;
               drag.current.y = e.clientY;
               setHover(null);
@@ -263,25 +276,56 @@ export function ColorAtlas({
       <div className="atlas-help">
         {is3d ? (
           <>
-            <Move size={13} /> Drag to orbit{" "}
+            <span>
+              {panMode ? "Drag to pan" : "Drag to orbit · Shift-drag to pan"}
+            </span>
+            <button
+              className={"atlas-control" + (panMode ? " active" : "")}
+              aria-label="Pan 3D view"
+              aria-pressed={panMode}
+              onClick={() => setPanMode((p) => !p)}
+            >
+              <Move size={13} /> Pan
+            </button>
+            <button
+              className="atlas-control"
+              aria-label="Focus selected color in 3D"
+              onClick={() => {
+                setHover(null);
+                setRotation((r) => focusAtlasColor(r, selected, size));
+              }}
+            >
+              <Crosshair size={13} /> Focus selected
+            </button>
             <label>
               Zoom{" "}
               <input
                 aria-label="3D zoom"
                 type="range"
-                min=".65"
-                max="1.8"
-                step=".05"
-                value={rotation.zoom}
-                onChange={(e) =>
-                  setRotation((r) => ({ ...r, zoom: Number(e.target.value) }))
-                }
+                min="0"
+                max="1000"
+                step="1"
+                aria-valuetext={`${Number(rotation.zoom.toFixed(1))}×`}
+                value={atlasZoomToSlider(rotation.zoom)}
+                onChange={(e) => {
+                  setHover(null);
+                  setRotation((r) =>
+                    zoomAtlas(r, atlasZoomFromSlider(Number(e.target.value))),
+                  );
+                }}
               />
+              <output aria-live="off">
+                {Number(rotation.zoom.toFixed(1))}×
+              </output>
             </label>
             <button
               className="icon-button"
               aria-label="Reset 3D view"
-              onClick={() => setRotation({ yaw: -0.55, pitch: 0.16, zoom: 1 })}
+              onClick={() => {
+                setRotation(DEFAULT_ATLAS_CAMERA);
+                setPanMode(false);
+                setHover(null);
+              }}
             >
               <RotateCcw size={14} />
             </button>

@@ -22,7 +22,7 @@ Deploy the generated `dist/` directory to any static host. Hash-based URLs suppo
 ## Features
 
 - Search names, paint codes, previous names, or opaque CSS colors (hex, RGB, HSL, OKLCH, and other formats supported by Culori).
-- Hue/lightness map, searchable swatch catalog, and a draggable, zoomable 3D OKLab cloud. The swatch view provides a keyboard-accessible alternative to the canvas.
+- Hue/lightness map, searchable swatch catalog, and a draggable, zoomable 3D OKLab cloud. Explore 3D supports 0.65×–32× zoom, panning (Pan mode or Shift-drag), and focusing on the selected paint. The zoom slider uses a logarithmic scale for fine control. The swatch view provides a keyboard-accessible alternative to the canvas.
 - Directional steps to real catalog paints, previews of each next step, explanations, exploration undo, and browser history.
 - Unified Compare with 3D, 2D, and side-by-side swatch views. Selected paints have prominent numbered markers. Optional nearby catalog colors cover the volume inside the selection and an adjustable surrounding margin; two selected paints recover the between-two workflow. Inspecting candidates preserves the palette and camera frame. Add alternatives directly or search by name/code. Legacy between URLs migrate to Compare with their endpoints preserved.
 - A zoomed similar-color neighborhood centered on the selected paint, with orbitable 3D, three 2D projections, linked point/list highlighting, zoom, and 12/24/48 nearest-paint choices. Click a point or list entry to recenter. Neighborhood view, count, and projection are shareable in the URL.
